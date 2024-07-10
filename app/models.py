@@ -1,3 +1,4 @@
+#Voy a crear registros ficticios
 from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
