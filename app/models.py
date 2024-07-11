@@ -83,30 +83,3 @@ class DiscountEnrollment(db.Model):
     __tablename__ = 'discount_enrollments'
     discount_discount_percentage = db.Column(db.Float, primary_key=True)
     enrollments_final_price = db.Column(db.Float, primary_key=True)
-
-# Schemas
-class StudentSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Student
-        include_fk = True
-
-class TeacherSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Teacher
-        include_fk = True
-
-class LevelSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Level
-        include_fk = True
-
-class InstrumentSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Instrument
-        include_fk = True
-
-class EnrollmentSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Enrollment
-        include_fk = True
-
