@@ -2,11 +2,11 @@ from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-# Creamos una base para nuestros modelos
-Base = declarative_base()
+# Creamos una db.Model para nuestros modelos
+db.Model = declarative_base()
 
-# Definimos los modelos correspondientes a las tablas de la base de datos
-class Student(Base):
+# Definimos los modelos correspondientes a las tablas de la db.Model de datos
+class Student(db.Model):
     __tablename__ = 'students'
 
     id_student = Column(Integer, primary_key=True, autoincrement=True)
@@ -18,7 +18,7 @@ class Student(Base):
 
     enrollments = relationship('Enrollment', backref='student')
 
-class Teacher(Base):
+class Teacher(db.Model):
     __tablename__ = 'teachers'
 
     id_teacher = Column(Integer, primary_key=True, autoincrement=True)
@@ -26,7 +26,7 @@ class Teacher(Base):
 
     instruments = relationship('TeacherInstrument', backref='teacher')
 
-class Level(Base):
+class Level(db.Model):
     __tablename__ = 'levels'
 
     id_level = Column(Integer, primary_key=True, autoincrement=True)
@@ -34,7 +34,7 @@ class Level(Base):
 
     instruments = relationship('InstrumentLevel', backref='level')
 
-class Instrument(Base):
+class Instrument(db.Model):
     __tablename__ = 'instruments'
 
     id_instrument = Column(Integer, primary_key=True, autoincrement=True)
@@ -44,7 +44,7 @@ class Instrument(Base):
     instrument_levels = relationship('InstrumentLevel', backref='instrument')
     enrollments = relationship('Enrollment', backref='instrument')
 
-class TeacherInstrument(Base):
+class TeacherInstrument(db.Model):
     __tablename__ = 'teachers_instruments'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -52,7 +52,7 @@ class TeacherInstrument(Base):
     id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'))
     id_level = Column(Integer, ForeignKey('levels.id_level'))
 
-class Enrollment(Base):
+class Enrollment(db.Model):
     __tablename__ = 'enrollments'
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -64,7 +64,7 @@ class Enrollment(Base):
     final_price = Column(Float)
     family_discount = Column(Boolean)
 
-class PriceInstrument(Base):
+class PriceInstrument(db.Model):
     __tablename__ = 'price_instrument'
 
     id_price = Column(Integer, primary_key=True, autoincrement=True)
@@ -73,7 +73,7 @@ class PriceInstrument(Base):
 
     enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
 
-class Discount(Base):
+class Discount(db.Model):
     __tablename__ = 'discount'
 
     id_discount = Column(Integer, primary_key=True, autoincrement=True)
@@ -83,27 +83,27 @@ class Discount(Base):
 
     enrollments = relationship('Enrollment', secondary='discount_enrollments', backref='discount')
 
-class InstrumentLevel(Base):
+class InstrumentLevel(db.Model):
     __tablename__ = 'instruments_levels'
 
     instruments_id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
     levels_id_level = Column(Integer, ForeignKey('levels.id_level'), primary_key=True)
 
-class PriceInstrumentEnrollment(Base):
+class PriceInstrumentEnrollment(db.Model):
     __tablename__ = 'price_instrument_enrollments'
 
     price_instrument_pack = Column(Enum('pack1', 'pack2', 'pack3'), primary_key=True)
     enrollments_base_price = Column(Float, primary_key=True)
 
-class DiscountEnrollment(Base):
+class DiscountEnrollment(db.Model):
     __tablename__ = 'discount_enrollments'
 
     discount_discount_percentage = Column(Float, primary_key=True)
     enrollments_final_price = Column(Float, primary_key=True)
 
-# Configura la conexión a la base de datos
+# Configura la conexión a la db.Model de datos
 engine = create_engine('mysql://username:password@localhost/Armania Utopia')
 Session = sessionmaker(bind=engine)
 
-# Crea las tablas en la base de datos si no existen
-Base.metadata.create_all(engine)
+# Crea las tablas en la db.Model de datos si no existen
+db.Model.metadata.create_all(engine)

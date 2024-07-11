@@ -1,19 +1,34 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
+from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
-from .config import Config
+from dotenv import load_dotenv
+import os
 
-db = SQLAlchemy()
-migrate = Migrate()
+# Cargar variables de entorno
+load_dotenv()
 
-def create_app():
-    app = Flask(__name__)
-    app.config.from_object(Config)
+app = Flask(__name__)
+app.config.from_object('app.config.Config')
 
-    db.init_app(app)
-    migrate.init_app(app, db)
+db = SQLAlchemy(app)
+ma = Marshmallow(app)
+jwt = JWTManager(app)
+migrate = Migrate(app, db)
 
-    from .routes import main as main_blueprint
-    app.register_blueprint(main_blueprint)
+# Registrar rutas
+from app.routes.students import students_bp
+from app.routes.teachers import teachers_bp
+from app.routes.levels import levels_bp
+from app.routes.instruments import instruments_bp
+from app.routes.enrollments import enrollments_bp
 
-    return app
+app.register_blueprint(students_bp)
+app.register_blueprint(teachers_bp)
+app.register_blueprint(levels_bp)
+app.register_blueprint(instruments_bp)
+app.register_blueprint(enrollments_bp)
+
+from app.utils.logging import setup_logging
+setup_logging()
