@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.crud.enrollments import add_enrollment, get_all_enrollments, get_enrollment_by_id, update_enrollment, delete_enrollment
-from app.utils.logging import log_request
+from app.utils.app_logging import log_request
 
 # Configuración del logger
 logger = logging.getLogger(__name__)
