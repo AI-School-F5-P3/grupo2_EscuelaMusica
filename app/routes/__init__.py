@@ -1,9 +1,15 @@
-# app/routes/__init__.py
-
 from flask import Blueprint
+from app.routes.students import students_bp
+from app.routes.teachers import teachers_bp
+from app.routes.levels import levels_bp
+from app.routes.instruments import instruments_bp
+from app.routes.enrollments import enrollments_bp
 
-students_bp = Blueprint('students', __name__)
-teachers_bp = Blueprint('teachers', __name__)
-levels_bp = Blueprint('levels', __name__)
-instruments_bp = Blueprint('instruments', __name__)
-enrollments_bp = Blueprint('enrollments', __name__)
+# Blueprint registration
+__all__ = [
+    'students_bp',
+    'teachers_bp',
+    'levels_bp',
+    'instruments_bp',
+    'enrollments_bp'
+]
