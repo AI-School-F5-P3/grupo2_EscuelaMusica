@@ -1,4 +1,4 @@
-from config import Session
+from db import Session
 from models import PriceInstrument
 
 db_session = Session()

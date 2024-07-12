@@ -6,6 +6,10 @@ from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 
+#importar librerías para el Log:
+import logging
+from logging.handlers import RotatingFileHandler
+
 # Cargar variables de entorno
 load_dotenv()
 
@@ -16,6 +20,20 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
 migrate = Migrate(app, db)
+
+# Configurar logging
+if not app.debug:
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_handler = RotatingFileHandler('logs/escuela_de_musica.log', maxBytes=10240, backupCount=10)
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    ))
+    file_handler.setLevel(logging.INFO)
+    app.logger.addHandler(file_handler)
+    app.logger.setLevel(logging.INFO)
+    app.logger.info('EscuelaDeMusica startup')
+
 
 # Registrar rutas
 from app.routes.students import students_bp

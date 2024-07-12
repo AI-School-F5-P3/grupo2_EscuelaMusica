@@ -1,4 +1,4 @@
-from config import Session
+from db import Session
 from models import TeacherInstrument
 
 db_session = Session()
