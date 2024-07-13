@@ -5,34 +5,29 @@ from app.utils.logging import log_request
 
 students_bp = Blueprint('students', __name__)
 
-@students_bp.route('/students', methods=['POST'])
-@jwt_required()
-@log_request
+@students_bp.route('', methods=['GET'])
+def get_students():
+    students = get_all_students()
+    return jsonify(students), 200
+
+@students_bp.route('/<int:student_id>', methods=['GET'])
+def get_single_student(student_id):
+    student = get_student_by_id(student_id)
+    return student, 200
+
+@students_bp.route('', methods=['POST'])
 def create_student():
-    data = request.json
-    return add_student(data)
+    student_data = request.get_json()
+    new_student = add_student(student_data)
+    return new_student, 201
 
-@students_bp.route('/students', methods=['GET'])
-@jwt_required()
-@log_request
-def list_students():
-    return jsonify(get_all_students())
+@students_bp.route('/<int:student_id>', methods=['PUT'])
+def modify_student(student_id):
+    student_data = request.get_json()
+    updated_student = update_student(student_id, student_data)
+    return updated_student, 200
 
-@students_bp.route('/students/<int:id>', methods=['GET'])
-@jwt_required()
-@log_request
-def retrieve_student(id):
-    return get_student_by_id(id)
-
-@students_bp.route('/students/<int:id>', methods=['PUT'])
-@jwt_required()
-@log_request
-def edit_student(id):
-    data = request.json
-    return update_student(id, data)
-
-@students_bp.route('/students/<int:id>', methods=['DELETE'])
-@jwt_required()
-@log_request
-def remove_student(id):
-    return delete_student(id)
+@students_bp.route('/<int:student_id>', methods=['DELETE'])
+def remove_student(student_id):
+    deleted_student = delete_student(student_id)
+    return deleted_student, 200

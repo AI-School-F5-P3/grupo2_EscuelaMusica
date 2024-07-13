@@ -5,34 +5,29 @@ from app.utils.logging import log_request
 
 instruments_bp = Blueprint('instruments', __name__)
 
-@instruments_bp.route('/instruments', methods=['POST'])
-@jwt_required()
-@log_request
+@instruments_bp.route('', methods=['GET'])
+def get_instruments():
+    instruments = get_all_instruments()
+    return jsonify(instruments), 200
+
+@instruments_bp.route('/<int:instrument_id>', methods=['GET'])
+def get_single_instrument(instrument_id):
+    instrument = get_instrument_by_id(instrument_id)
+    return instrument, 200
+
+@instruments_bp.route('', methods=['POST'])
 def create_instrument():
-    data = request.json
-    return add_instrument(data)
+    instrument_data = request.get_json()
+    new_instrument = add_instrument(instrument_data)
+    return new_instrument, 201
 
-@instruments_bp.route('/instruments', methods=['GET'])
-@jwt_required()
-@log_request
-def list_instruments():
-    return jsonify(get_all_instruments())
+@instruments_bp.route('/<int:instrument_id>', methods=['PUT'])
+def modify_instrument(instrument_id):
+    instrument_data = request.get_json()
+    updated_instrument = update_instrument(instrument_id, instrument_data)
+    return updated_instrument, 200
 
-@instruments_bp.route('/instruments/<int:id>', methods=['GET'])
-@jwt_required()
-@log_request
-def retrieve_instrument(id):
-    return get_instrument_by_id(id)
-
-@instruments_bp.route('/instruments/<int:id>', methods=['PUT'])
-@jwt_required()
-@log_request
-def edit_instrument(id):
-    data = request.json
-    return update_instrument(id, data)
-
-@instruments_bp.route('/instruments/<int:id>', methods=['DELETE'])
-@jwt_required()
-@log_request
-def remove_instrument(id):
-    return delete_instrument(id)
+@instruments_bp.route('/<int:instrument_id>', methods=['DELETE'])
+def remove_instrument(instrument_id):
+    deleted_instrument = delete_instrument(instrument_id)
+    return deleted_instrument, 200

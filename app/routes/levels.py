@@ -5,34 +5,29 @@ from app.utils.logging import log_request
 
 levels_bp = Blueprint('levels', __name__)
 
-@levels_bp.route('/levels', methods=['POST'])
-@jwt_required()
-@log_request
+@levels_bp.route('', methods=['GET'])
+def get_levels():
+    levels = get_all_levels()
+    return jsonify(levels), 200
+
+@levels_bp.route('/<int:level_id>', methods=['GET'])
+def get_single_level(level_id):
+    level = get_level_by_id(level_id)
+    return level, 200
+
+@levels_bp.route('', methods=['POST'])
 def create_level():
-    data = request.json
-    return add_level(data)
+    level_data = request.get_json()
+    new_level = add_level(level_data)
+    return new_level, 201
 
-@levels_bp.route('/levels', methods=['GET'])
-@jwt_required()
-@log_request
-def list_levels():
-    return jsonify(get_all_levels())
+@levels_bp.route('/<int:level_id>', methods=['PUT'])
+def modify_level(level_id):
+    level_data = request.get_json()
+    updated_level = update_level(level_id, level_data)
+    return updated_level, 200
 
-@levels_bp.route('/levels/<int:id>', methods=['GET'])
-@jwt_required()
-@log_request
-def retrieve_level(id):
-    return get_level_by_id(id)
-
-@levels_bp.route('/levels/<int:id>', methods=['PUT'])
-@jwt_required()
-@log_request
-def edit_level(id):
-    data = request.json
-    return update_level(id, data)
-
-@levels_bp.route('/levels/<int:id>', methods=['DELETE'])
-@jwt_required()
-@log_request
-def remove_level(id):
-    return delete_level(id)
+@levels_bp.route('/<int:level_id>', methods=['DELETE'])
+def remove_level(level_id):
+    deleted_level = delete_level(level_id)
+    return deleted_level, 200
