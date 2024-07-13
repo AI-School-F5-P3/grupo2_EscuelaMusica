@@ -1,5 +1,7 @@
 from app import db
-from sqlalchemy import Enum
+from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
 class Student(db.Model):
     __tablename__ = 'students'
