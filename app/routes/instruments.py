@@ -1,7 +1,7 @@
 import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.CRUD.instruments import add_instrument, get_all_instruments, get_instrument_by_id, update_instrument, delete_instrument
+from app.crud.instruments import add_instrument, get_all_instruments, get_instrument_by_id, update_instrument, delete_instrument
 from app.utils.app_logging import log_request
 
 # Configuración del logger
