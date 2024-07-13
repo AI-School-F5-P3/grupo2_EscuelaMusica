@@ -1,50 +1,74 @@
+import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app.crud.levels import add_level, get_all_levels, get_level_by_id, update_level, delete_level
-from app.utils.exceptions import ResourceNotFoundError
+from app.CRUD.instruments import add_instrument, get_all_instruments, get_instrument_by_id, update_instrument, delete_instrument
+from app.utils.app_logging import log_request
 
-levels_bp = Blueprint('levels', __name__)
+# Configuración del logger
+logger = logging.getLogger(__name__)
 
-@levels_bp.route('', methods=['GET'])
+instruments_bp = Blueprint('instruments', __name__)
+
+@instruments_bp.route('/instruments', methods=['POST'])
 @jwt_required()
-def get_levels():
-    levels = get_all_levels()
-    return jsonify(levels), 200
+@log_request
+def create_instrument():
+    current_user = get_jwt_identity()
+    data = request.json
+    logger.info(f"Usuario {current_user} creando nuevo instrumento: {data}")
+    result = add_instrument(data)
+    if isinstance(result, tuple) and result[1] != 201:
+        logger.error(f"Error al crear instrumento: {result[0]}")
+    else:
+        logger.info(f"Instrumento creado exitosamente: {result}")
+    return result
 
-@levels_bp.route('/<int:level_id>', methods=['GET'])
+@instruments_bp.route('/instruments', methods=['GET'])
 @jwt_required()
-def get_single_level(level_id):
-    try:
-        level = get_level_by_id(level_id)
-        return jsonify(level), 200
-    except ResourceNotFoundError as e:
-        return jsonify({"error": str(e)}), 404
+@log_request
+def list_instruments():
+    current_user = get_jwt_identity()
+    logger.info(f"Usuario {current_user} solicitando lista de todos los instrumentos")
+    instruments = get_all_instruments()
+    logger.info(f"Se recuperaron {len(instruments)} instrumentos")
+    return jsonify(instruments)
 
-@levels_bp.route('', methods=['POST'])
+@instruments_bp.route('/instruments/<int:id>', methods=['GET'])
 @jwt_required()
-def create_level():
-    level_data = request.get_json()
-    try:
-        new_level = add_level(level_data)
-        return jsonify(new_level), 201
-    except ValueError as e:
-        return jsonify({"error": str(e)}), 400
+@log_request
+def retrieve_instrument(id):
+    current_user = get_jwt_identity()
+    logger.info(f"Usuario {current_user} solicitando detalles del instrumento con ID: {id}")
+    result = get_instrument_by_id(id)
+    if isinstance(result, tuple) and result[1] != 200:
+        logger.error(f"Error al recuperar instrumento con ID {id}: {result[0]}")
+    else:
+        logger.info(f"Instrumento con ID {id} recuperado exitosamente")
+    return result
 
-@levels_bp.route('/<int:level_id>', methods=['PUT'])
+@instruments_bp.route('/instruments/<int:id>', methods=['PUT'])
 @jwt_required()
-def modify_level(level_id):
-    level_data = request.get_json()
-    try:
-        updated_level = update_level(level_id, level_data)
-        return jsonify(updated_level), 200
-    except ResourceNotFoundError as e:
-        return jsonify({"error": str(e)}), 404
+@log_request
+def edit_instrument(id):
+    current_user = get_jwt_identity()
+    data = request.json
+    logger.info(f"Usuario {current_user} intentando actualizar instrumento con ID {id}: {data}")
+    result = update_instrument(id, data)
+    if isinstance(result, tuple) and result[1] != 200:
+        logger.error(f"Error al actualizar instrumento con ID {id}: {result[0]}")
+    else:
+        logger.info(f"Instrumento con ID {id} actualizado exitosamente")
+    return result
 
-@levels_bp.route('/<int:level_id>', methods=['DELETE'])
+@instruments_bp.route('/instruments/<int:id>', methods=['DELETE'])
 @jwt_required()
-def remove_level(level_id):
-    try:
-        deleted_level = delete_level(level_id)
-        return jsonify({"message": "Level deleted successfully", "level": deleted_level}), 200
-    except ResourceNotFoundError as e:
-        return jsonify({"error": str(e)}), 404
+@log_request
+def remove_instrument(id):
+    current_user = get_jwt_identity()
+    logger.info(f"Usuario {current_user} intentando eliminar instrumento con ID {id}")
+    result = delete_instrument(id)
+    if isinstance(result, tuple) and result[1] != 200:
+        logger.error(f"Error al eliminar instrumento con ID {id}: {result[0]}")
+    else:
+        logger.info(f"Instrumento con ID {id} eliminado exitosamente")
+    return result
