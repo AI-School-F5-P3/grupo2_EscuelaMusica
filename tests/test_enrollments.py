@@ -1,5 +1,6 @@
+from flask import app
 import pytest
-from models import Enrollment, Student, Level, Instrument, Teacher
+from app.models import Enrollment, Student, Level, Instrument, Teacher
 from app import db
 
 class TestEnrollment(pytest.TestCase):

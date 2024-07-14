@@ -1,6 +1,6 @@
 from app.models import Instrument
 from app.schemas import instrument_schema, instruments_schema
-from app import db
+from app.__init__ import db
 
 def add_instrument(data):
     new_instrument = Instrument(**data)

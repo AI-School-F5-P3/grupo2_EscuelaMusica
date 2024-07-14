@@ -1,12 +1,14 @@
-# app/db.py
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from app.models import Base
+from urllib.parse import quote_plus
 
-# Configura la conexión a la base de datos
-engine = create_engine('mysql://root:3306@localhost/armonia_utopia')
+password = quote_plus("rocio99")
+engine = create_engine(f'mysql+pymysql://root:{password}@localhost:3306/armonia_utopia', pool_pre_ping=True)
 Session = sessionmaker(bind=engine)
 
+db = SQLAlchemy()
+
 # Crea las tablas en la base de datos si no existen
-Base.metadata.create_all(engine)
+db.metadata.create_all(engine)
 

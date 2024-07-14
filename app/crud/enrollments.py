@@ -1,6 +1,6 @@
 from app.models import Enrollment
 from app.schemas import enrollment_schema, enrollments_schema
-from app import db
+from app.__init__ import db
 
 def add_enrollment(data):
     new_enrollment = Enrollment(**data)

@@ -1,9 +1,9 @@
 from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
 from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+#OJO. añadido aparte para solucionar 13 problemas:
+from __init__ import db
 
-# Creamos una db.Model para nuestros modelos
-db.Model = declarative_base()
+
 
 # Definimos los modelos correspondientes a las tablas de la db.Model de datos
 class Student(db.Model):
@@ -101,9 +101,6 @@ class DiscountEnrollment(db.Model):
     discount_discount_percentage = Column(Float, primary_key=True)
     enrollments_final_price = Column(Float, primary_key=True)
 
-# Configura la conexión a la db.Model de datos
-engine = create_engine('mysql://username:password@localhost/Armania Utopia')
-Session = sessionmaker(bind=engine)
 
-# Crea las tablas en la db.Model de datos si no existen
-db.Model.metadata.create_all(engine)
+
+

@@ -1,6 +1,6 @@
 from app.models import Level
 from app.schemas import level_schema, levels_schema
-from app import db
+from app.__init__ import db
 
 def add_level(data):
     new_level = Level(**data)

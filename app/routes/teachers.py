@@ -2,7 +2,7 @@ import logging
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.CRUD.teachers import add_teacher, get_all_teachers, get_teacher_by_id, update_teacher, delete_teacher
-from app.utils.logging import log_request
+from app.utils.app_logging import log_request
 
 # Configuración del logger
 logger = logging.getLogger(__name__)
