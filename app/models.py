@@ -1,5 +1,8 @@
+from tabulate import tabulate
+from sqlalchemy import create_engine #Se usa para crear un motor de bbdd
 from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
 from sqlalchemy.orm import relationship, sessionmaker
+<<<<<<< HEAD
 from flask_sqlalchemy import SQLAlchemy
 
 # Creamos una db.Model para nuestros modelos
@@ -9,15 +12,23 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 # Definimos los modelos correspondientes a las tablas de la db.Model de datos
+=======
+from sqlalchemy.ext.declarative import declarative_base
+from faker import Faker #pip install faker
+from __init__ import db
+
+db.Model = declarative_base()
+>>>>>>> Jaanh
 class Student(db.Model):
     __tablename__ = 'students'
 
     id_student = Column(Integer, primary_key=True, autoincrement=True)
-    first_name = Column(String(255))
-    last_name = Column(String(255))
+    first_name = Column(String(20))
+    last_name = Column(String(20))
     age = Column(Integer)
-    phone = Column(String(255))
-    email = Column(String(255))
+    phone = Column(String(20))
+    email = Column(String(20))
+    #enrollments = relationship('Enrollment', backref='student')
 
     enrollments = relationship('Enrollment', backref='student')
 
@@ -25,15 +36,18 @@ class Teacher(db.Model):
     __tablename__ = 'teachers'
 
     id_teacher = Column(Integer, primary_key=True, autoincrement=True)
-    name_teacher = Column(String(255), nullable=False)
+    name_teacher = Column(String(20))
+    last_name=Column(String(20))
+    telphone = Column(String(20))
+    email = Column(String(20))
+    instruments = relationship('Instrument', secondary='teachers_instruments',backref='teacher')
 
-    instruments = relationship('TeacherInstrument', backref='teacher')
-
+    #instruments = relationship('TeacherInstrument', backref='teacher')
 class Level(db.Model):
     __tablename__ = 'levels'
 
     id_level = Column(Integer, primary_key=True, autoincrement=True)
-    name_level = Column(String(255))
+    name_level = Column(String(25))
 
     instruments = relationship('InstrumentLevel', backref='level')
 
@@ -41,19 +55,20 @@ class Instrument(db.Model):
     __tablename__ = 'instruments'
 
     id_instrument = Column(Integer, primary_key=True, autoincrement=True)
-    instrument = Column(String(255), nullable=False)
+    instrument = Column(String(20), nullable=False)
 
     teacher_instruments = relationship('TeacherInstrument', backref='instrument')
-    instrument_levels = relationship('InstrumentLevel', backref='instrument')
-    enrollments = relationship('Enrollment', backref='instrument')
+    
+    
+    instrument_levels = relationship('Level',secondary="instruments_levels", backref='instruments')
+    #enrollments = relationship('Enrollment', backref='instrument')
 
 class TeacherInstrument(db.Model):
     __tablename__ = 'teachers_instruments'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_teacher = Column(Integer, ForeignKey('teachers.id_teacher'))
-    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'))
-    id_level = Column(Integer, ForeignKey('levels.id_level'))
+    
+    id_teacher = Column('id_teacher',Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
+    id_instrument = Column('id_instrument',Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
+    #id_level = Column(Integer, ForeignKey('levels.id_level'))
 
 class Enrollment(db.Model):
     __tablename__ = 'enrollments'
@@ -71,11 +86,10 @@ class PriceInstrument(db.Model):
     __tablename__ = 'price_instrument'
 
     id_price = Column(Integer, primary_key=True, autoincrement=True)
-    pack = Column(Enum('pack1', 'pack2', 'pack3'))
+    pack = Column(String(10))
     pack_price = Column(Float)
 
-    enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
-
+    #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
 class Discount(db.Model):
     __tablename__ = 'discount'
 
@@ -89,8 +103,8 @@ class Discount(db.Model):
 class InstrumentLevel(db.Model):
     __tablename__ = 'instruments_levels'
 
-    instruments_id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
-    levels_id_level = Column(Integer, ForeignKey('levels.id_level'), primary_key=True)
+    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
+    id_level = Column(Integer, ForeignKey('levels.id_level'), primary_key=True)
 
 class PriceInstrumentEnrollment(db.Model):
     __tablename__ = 'price_instrument_enrollments'
@@ -103,6 +117,7 @@ class DiscountEnrollment(db.Model):
 
     discount_discount_percentage = Column(Float, primary_key=True)
     enrollments_final_price = Column(Float, primary_key=True)
+<<<<<<< HEAD
 
 # Configura la conexión a la db.Model de datos
 engine = create_engine('mysql://root:1319@localhost/armonia1')
@@ -110,3 +125,5 @@ Session = sessionmaker(bind=engine)
 
 # Crea las tablas en la db.Model de datos si no existen
 db.Model.metadata.create_all(engine)
+=======
+>>>>>>> Jaanh

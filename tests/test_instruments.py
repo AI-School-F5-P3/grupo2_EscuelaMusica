@@ -5,34 +5,41 @@ from app import db
 class TestInstrument(pytest.TestCase):
     def setUp(self):
         # Configurar la conexión a la base de datos para las pruebas
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql:///:armonia1:'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
         db.create_all()
-
-    def tearDown(self):
+        yield db
         db.session.remove()
         db.drop_all()
 
-    def test_create_instrument(self):
-        # Crear un nuevo instrumento
+def test_create_instrument(init_database):
+    with init_database.app.app_context():
+        instrument = Instrument(instrument='Guitar')
+        db.session.add(instrument)
+        db.session.commit()
+
+        assert instrument.id_instrument is not None
+        assert instrument.instrument == 'Guitar'
+
+def test_update_instrument(init_database):
+    with init_database.app.app_context():
         instrument = Instrument(instrument='Piano')
         db.session.add(instrument)
         db.session.commit()
 
-        # Verificar que el instrumento se creó correctamente
-        self.assertEqual(instrument.instrument, 'Piano')
+        instrument.instrument = 'Grand Piano'
+        db.session.commit()
 
-    def test_update_instrument(self):
-        # Crear un nuevo instrumento
-        instrument = Instrument(instrument='Piano')
+        updated_instrument = Instrument.query.get(instrument.id_instrument)
+        assert updated_instrument.instrument == 'Grand Piano'
+
+def test_delete_instrument(init_database):
+    with init_database.app.app_context():
+        instrument = Instrument(instrument='Drums')
         db.session.add(instrument)
         db.session.commit()
 
-        # Actualizar el instrumento
-        instrument.instrument = 'Guitarra'
+        db.session.delete(instrument)
         db.session.commit()
 
-        # Verificar que el instrumento se actualizó correctamente
-        self.assertEqual(instrument.instrument, 'Guitarra')
-
-if __name__ == '__main__':
-    pytest.main()
+        deleted_instrument = Instrument.query.get(instrument.id_instrument)
+        assert deleted_instrument is None
