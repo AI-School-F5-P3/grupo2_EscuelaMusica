@@ -1,6 +1,6 @@
 from sqlalchemy.orm import sessionmaker
 from models import Base, engine, Student
-
+from app.utils.app_logging import setup_logging
 # Crear sesión de base de datos
 Session = sessionmaker(bind=engine)
 session = Session()
