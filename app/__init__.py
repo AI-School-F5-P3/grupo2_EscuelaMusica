@@ -51,5 +51,5 @@ def create_app():
     app.register_blueprint(instruments_bp)
     app.register_blueprint(enrollments_bp)
 
-from app.utils.logging import setup_logging
+from app.utils.app_logging import setup_logging
 setup_logging()
