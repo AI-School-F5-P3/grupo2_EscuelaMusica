@@ -37,22 +37,19 @@ class Teacher(Base):
     last_name=Column(String(20))
     telphone = Column(String(20))
     email = Column(String(20))
-    instruments = relationship('Instrument', secondary='teachers_instruments',backref='teacher')
-
+    rel_instrument = relationship('Instrument', secondary='teachers_instruments',backref='instruments_teacher') #relación de regreso
 
 
 class Instrument(Base):
     __tablename__ = 'instruments'
-
     id_instrument = Column(Integer, primary_key=True, autoincrement=True)
     instrument = Column(String(20), nullable=False)
 
-    teacher_instruments = relationship('TeacherInstrument', backref='instrument')
-    
-    
-    instrument_levels = relationship('Level',secondary="instruments_levels", backref='instruments')
+    rel_levels = relationship('Level',secondary="instruments_levels", backref='back_levels')
     #enrollments = relationship('Enrollment', backref='instrument')
-    
+
+    #Creación de una columna para que identifique Price
+    #pack_id = Column(Integer, ForeignKey('price_instrument.id_price'))
 
 class Level(Base):
     __tablename__ = 'levels'
@@ -60,10 +57,10 @@ class Level(Base):
     id_level = Column(Integer, primary_key=True, autoincrement=True)
     name_level = Column(String(25))
 
-    instrument_level= relationship('InstrumentLevel', backref='level') 
+    #----instrument_level= relationship('InstrumentLevel', backref='level') #----------------
 
     
-class TeacherInstrument(Base):
+class TeacherInstrument(Base): #Parece ser que no es necesario
     __tablename__ = 'teachers_instruments'
     
     id_teacher = Column('id_teacher',Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
@@ -72,7 +69,7 @@ class TeacherInstrument(Base):
 
 
 
-class InstrumentLevel(Base):
+class InstrumentLevel(Base): ##Parece ser que no es necesario
     __tablename__ = 'instruments_levels'
 
     id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
@@ -80,8 +77,7 @@ class InstrumentLevel(Base):
 
 
 
-
-class PriceInstrument(Base):
+""" class PriceInstrument(Base):
     __tablename__ = 'price_instrument'
 
     id_price = Column(Integer, primary_key=True, autoincrement=True)
@@ -89,6 +85,8 @@ class PriceInstrument(Base):
     pack_price = Column(Float)
 
     #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
+    instruments = relationship("Instrument", backref="pack")
+ """
 
 
 
@@ -117,32 +115,23 @@ relations = {
 
 sesion = Session()
 
-relations = {
-    "Mar":["Piano", "Guitarra", "Batería", "Flauta"],
-    "Flor":["Piano", "Guitarra"],
-    "Álvaro": ["Piano"],
-    "Marifé": ["Piano", "Canto"],
-    "Nayara": ["Piano", "Violín", "Bajo"],
-    "Sofía": ["Percusión"]
-}
 
-sesion = Session()
+teachers = []
+instruments = []
 
-
-
-for teacher_name, valor in relations.items():
-    teacher = sesion.query(Teacher).filter_by(name_teacher=teacher_name).first()
-    if not teacher:
-        teacher = Teacher(name_teacher=teacher_name)
-    for instrument_name in valor:
+for name, instrument_list in relations.items():
+    teacher = Teacher(name_teacher=name)
+    sesion.add(teacher)
+    teachers.append(teacher)
+    
+    for instrument_name in instrument_list:
         instrument = sesion.query(Instrument).filter_by(instrument=instrument_name).first()
         if not instrument:
             instrument = Instrument(instrument=instrument_name)
-        if instrument not in teacher.instruments:
-            teacher.instruments.append(instrument)
+            sesion.add(instrument)
+        instruments.append(instrument)
+        teacher.rel_instrument.append(instrument)
 
-sesion.flush()
-sesion.commit()
 
 sesion.flush() #guardar las relaciones en la tabla puente utilizando el método flush de la sesión.
 
@@ -153,7 +142,7 @@ sesion.commit()
 Base.metadata.create_all(engine)
 
 
-#*******************************************
+#*********************************** RELATIONS *****************************
 relations_levels= {
     "Piano":["Cero", "Iniciación", "Medio", "Avanzado"],
     "Guitarra":["Iniciación", "Medio"],
@@ -167,27 +156,31 @@ relations_levels= {
     "Percusion":["Cero"]
     }
 
+
+        
 for i, valor in relations_levels.items():
-    varlevel = sesion.query(Level).filter_by(name_level=i).first()
-    if not varlevel:
-        varlevel = Level(name_level=i)
-        sesion.add(varlevel)
-    for j in valor:
-        varinstrument = sesion.query(Instrument).filter_by(instrument=j).first()
-        if not varinstrument:
-            varinstrument = Instrument(instrument=j)
-            sesion.add(varinstrument)
-        # Establecer la relación entre el instrumento y el nivel en la tabla instruments_levels
-        varinstrument.instrument_levels.append(varlevel)
+    varinstrument = sesion.query(Instrument).filter_by(instrument=i).first()
+    if not varinstrument:
+        varinstrument = Instrument(instrument=i)
         sesion.add(varinstrument)
+    for level_name in valor:
+        varlevel = sesion.query(Level).filter_by(name_level=level_name).first()
+        if not varlevel:
+            varlevel = Level(name_level=level_name)
+            sesion.add(varlevel)
+        varinstrument.rel_levels.append(varlevel)        
+        
+        
+        
 sesion.flush()
 sesion.commit()
 Base.metadata.create_all(engine)
-            
-            
 
 
-#///////////////////////////////// INSERTADO LOS VALORES PROPIOS /////////////////////////////////////
+
+
+
+#////////////////////////////////////////////////////////////////////////////////////
 students = [
     {"first_name": "John", "last_name": "Doe", "age": 20, "phone": "123-456-7890", "email": "john.doe@example.com"},
     {"first_name": "Jane", "last_name": "Smith", "age": 22, "phone": "098-765-4321", "email": "jane.smith@example.com"},
@@ -202,11 +195,6 @@ sesion.commit()
 
 
 result = sesion.query(Student).all()
-
-# Imprime los resultados
-for row in result:
-    print(row.first_name, row.last_name, row.age, row.phone, row.email) #Hay que imprimir a través de los atributos
-
 
 
 fake=Faker()
@@ -239,46 +227,14 @@ for i in range(len(list_level)):
 
 
 
-list_packs={"Pack_1": 35, "Pack_2": 40, "Pack_3": 40, "Pack_4":40}
-for key, value in list_packs.items():
-    price = PriceInstrument(
-        pack=key,
-        pack_price=value
-    )
-    sesion.add(price)
 
 
 """ Es para hacer una consulta en mysql--------------
-
-
-#Primera relación------------
 
 SELECT t.name_teacher, i.instrument
 FROM teachers t
 JOIN teachers_instruments ti ON t.id_teacher = ti.id_teacher
 JOIN instruments i ON ti.id_instrument = i.id_instrument;
-
-
-
-
-
-
-#Segunda relación----------
-
-SELECT i.instrument, l.name_level
-FROM instruments i
-JOIN instruments_levels il ON i.id_instrument = il.id_instrument
-JOIN levels l ON il.id_level = l.id_level
-ORDER BY i.instrument;
-
-#o también para ver esa consulta agrupada
-SELECT i.instrument, GROUP_CONCAT(l.name_level) AS levels
-FROM instruments i
-JOIN instruments_levels il ON i.id_instrument = il.id_instrument
-JOIN levels l ON il.id_level = l.id_level
-GROUP BY i.instrument
-ORDER BY i.instrument;
-
 
 """
 
@@ -302,7 +258,6 @@ result = sesion.query(Student).all()
 for row in result:
     pprint(row.__dict__)  # 
 """
-
 
 
 
