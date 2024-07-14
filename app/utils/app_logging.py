@@ -61,3 +61,6 @@ def log_warning(message):
 def log_debug(message):
     """Función para loguear mensajes de debug."""
     current_app.logger.debug(message)
+def log_debug(message):
+    """Función para loguear mensajes de debug."""
+    logger.debug(message)
