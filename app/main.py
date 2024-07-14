@@ -1,5 +1,5 @@
 from sqlalchemy.orm import sessionmaker
-from model import Base, engine, Student
+from models import Base, engine, Student
 
 # Crear sesión de base de datos
 Session = sessionmaker(bind=engine)

@@ -5,7 +5,7 @@ from app import db
 class TestStudent(pytest.TestCase):
     def setUp(self):
         # Configurar la conexión a la base de datos para las pruebas
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql:///:armonia1:'
         db.create_all()
 
     def tearDown(self):
