@@ -28,3 +28,16 @@ docker-compose.override.yml
 # Otros archivos y directorios específicos del proyecto
 dbdiagram_UML.txt
 table_armonia_sql.txt
+
+# Archivos de configuración de IDEs
+.idea/
+.vscode/
+.vscode/*
+.DS_Store
+
+# Archivos de configuración de logs
+*.log
+
+# Otros archivos y directorios específicos del proyecto
+dbdiagram_UML.txt
+table_armonia_sql.txt
