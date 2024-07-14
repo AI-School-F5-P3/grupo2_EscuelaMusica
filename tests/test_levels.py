@@ -1,38 +1,53 @@
 import pytest
-from models import Level
-from app import db
+from app import create_app, db
+from app.models import Level
 
-class TestLevel(pytest.TestCase):
-    def setUp(self):
-        # Configurar la conexión a la base de datos para las pruebas
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+@pytest.fixture(scope='module')
+def app():
+    app = create_app('testing')
+    return app
+
+@pytest.fixture(scope='module')
+def test_client(app):
+    return app.test_client()
+
+@pytest.fixture(scope='module')
+def init_database(app):
+    with app.app_context():
         db.create_all()
-
-    def tearDown(self):
+        yield db
         db.session.remove()
         db.drop_all()
 
-    def test_create_level(self):
-        # Crear un nuevo nivel
-        level = Level(name_level='Iniciación')
+def test_create_level(init_database):
+    with init_database.app.app_context():
+        level = Level(name_level='Beginner')
         db.session.add(level)
         db.session.commit()
 
-        # Verificar que el nivel se creó correctamente
-        self.assertEqual(level.name_level, 'Iniciación')
+        assert level.id_level is not None
+        assert level.name_level == 'Beginner'
 
-    def test_update_level(self):
-        # Crear un nuevo nivel
-        level = Level(name_level='Iniciación')
+def test_update_level(init_database):
+    with init_database.app.app_context():
+        level = Level(name_level='Intermediate')
         db.session.add(level)
         db.session.commit()
 
-        # Actualizar el nivel
-        level.name_level = 'Medio'
+        level.name_level = 'Advanced Intermediate'
         db.session.commit()
 
-        # Verificar que el nivel se actualizó correctamente
-        self.assertEqual(level.name_level, 'Medio')
+        updated_level = Level.query.get(level.id_level)
+        assert updated_level.name_level == 'Advanced Intermediate'
 
-if __name__ == '__main__':
-    pytest.main()
+def test_delete_level(init_database):
+    with init_database.app.app_context():
+        level = Level(name_level='Advanced')
+        db.session.add(level)
+        db.session.commit()
+
+        db.session.delete(level)
+        db.session.commit()
+
+        deleted_level = Level.query.get(level.id_level)
+        assert deleted_level is None
