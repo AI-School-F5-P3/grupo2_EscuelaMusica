@@ -13,16 +13,16 @@ class Student(db.Model):
     first_name = db.Column(db.String(20))
     last_name = db.Column(db.String(20))
     age = db.Column(db.Integer)
-    phone = db.Column(db.String(20))
-    email = db.Column(db.String(20))
+    phone = db.Column(db.String(100))
+    email = db.Column(db.String(100))
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
     id_teacher = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name_teacher = db.Column(db.String(20))
     last_name = db.Column(db.String(20))
-    telphone = db.Column(db.String(20))
-    email = db.Column(db.String(20))
+    telphone = db.Column(db.String(100))
+    email = db.Column(db.String(100))
     rel_instrument = db.relationship('Instrument', secondary='teachers_instruments', backref='instruments_teacher')
 
 class Instrument(db.Model):
