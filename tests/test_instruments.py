@@ -1,42 +1,45 @@
 import pytest
-from app import db, create_app
-from app.models import Instrument, Level
+from app import create_app
+from app.models import db, Instrument, Level
 
-@pytest.fixture
-def app():
-    app = create_app('testing')
-    return app
+@pytest.fixture(scope='module')
+def test_client():
+    app = create_app()
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost:3306/armonia_utopia'
+    app.config['TESTING'] = True
 
-@pytest.fixture
-def client(app):
-    return app.test_client()
+    with app.test_client() as testing_client:
+        with app.app_context():
+            db.create_all()
+            yield testing_client
+            db.session.remove()
+            db.drop_all()
 
-@pytest.fixture
-def db_session(app):
-    with app.app_context():
-        db.create_all()
-        yield db.session
-        db.session.remove()
-        db.drop_all()
-
-def test_instrument_model(db_session):
-    instrument = Instrument(instrument="Guitar")
-    db_session.add(instrument)
-    db_session.commit()
-
-    retrieved_instrument = Instrument.query.filter_by(instrument="Guitar").first()
-    assert retrieved_instrument is not None
-    assert retrieved_instrument.instrument == "Guitar"
-
-def test_instrument_level_relationship(db_session):
+def test_create_instrument(test_client):
     instrument = Instrument(instrument="Piano")
-    level = Level(name_level="Intermediate")
-    instrument.rel_levels.append(level)
-    db_session.add(instrument)
-    db_session.add(level)
-    db_session.commit()
+    db.session.add(instrument)
+    db.session.commit()
 
     retrieved_instrument = Instrument.query.filter_by(instrument="Piano").first()
     assert retrieved_instrument is not None
+    assert retrieved_instrument.instrument == "Piano"
+
+    db.session.delete(retrieved_instrument)
+    db.session.commit()
+
+def test_instrument_level_relationship(test_client):
+    instrument = Instrument(instrument="Violin")
+    level = Level(name_level="Beginner")
+    instrument.rel_levels.append(level)
+    db.session.add(instrument)
+    db.session.add(level)
+    db.session.commit()
+
+    retrieved_instrument = Instrument.query.filter_by(instrument="Violin").first()
+    assert retrieved_instrument is not None
     assert len(retrieved_instrument.rel_levels) == 1
-    assert retrieved_instrument.rel_levels[0].name_level == "Intermediate"
+    assert retrieved_instrument.rel_levels[0].name_level == "Beginner"
+
+    db.session.delete(instrument)
+    db.session.delete(level)
+    db.session.commit()

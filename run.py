@@ -10,7 +10,7 @@ def create_app():
     
     with app.app_context():
         init_db(app)
-    
+     
     return app
 
 if __name__ == "__main__":

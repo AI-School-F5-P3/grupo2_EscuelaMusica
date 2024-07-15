@@ -1,32 +1,31 @@
 import pytest
-from app import db, create_app
-from app.models import Student
+from app import create_app
+from app.models import db, Student
 
-@pytest.fixture
-def app():
-    app = create_app('testing')
-    return app
+@pytest.fixture(scope='module')
+def test_client():
+    app = create_app()
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost:3306/armonia_utopia'
+    app.config['TESTING'] = True
 
-@pytest.fixture
-def client(app):
-    return app.test_client()
+    with app.test_client() as testing_client:
+        with app.app_context():
+            db.create_all()
+            yield testing_client
+            db.session.remove()
+            db.drop_all()
 
-@pytest.fixture
-def db_session(app):
-    with app.app_context():
-        db.create_all()
-        yield db.session
-        db.session.remove()
-        db.drop_all()
+def test_create_student(test_client):
+    student = Student(first_name="Test", last_name="Student", age=20, phone="1234567890", email="test@test.com")
+    db.session.add(student)
+    db.session.commit()
 
-def test_student_model(db_session):
-    student = Student(first_name="John", last_name="Doe", age=20, phone="123-456-7890", email="john@example.com")
-    db_session.add(student)
-    db_session.commit()
-
-    retrieved_student = Student.query.filter_by(first_name="John").first()
+    retrieved_student = Student.query.filter_by(first_name="Test").first()
     assert retrieved_student is not None
-    assert retrieved_student.last_name == "Doe"
+    assert retrieved_student.last_name == "Student"
     assert retrieved_student.age == 20
-    assert retrieved_student.phone == "123-456-7890"
-    assert retrieved_student.email == "john@example.com"
+    assert retrieved_student.phone == "1234567890"
+    assert retrieved_student.email == "test@test.com"
+
+    db.session.delete(retrieved_student)
+    db.session.commit()

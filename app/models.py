@@ -1,8 +1,10 @@
+import random
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import delete
+from sqlalchemy import Float, ForeignKey, delete
 from sqlalchemy.exc import IntegrityError
 from faker import Faker
+from sqlalchemy import Float, ForeignKey #se agrego neuvo sugerencia claude
 
 db = SQLAlchemy()
 
@@ -29,6 +31,7 @@ class Instrument(db.Model):
     __tablename__ = 'instruments'
     id_instrument = db.Column(db.Integer, primary_key=True, autoincrement=True)
     instrument = db.Column(db.String(20), nullable=False)
+    pack_id = db.Column(db.Integer, db.ForeignKey('price.id_pack')) # agregado nuevo sugerencia claude
     rel_levels = db.relationship('Level', secondary="instruments_levels", backref='back_levels')
 
 class Level(db.Model):
@@ -63,7 +66,7 @@ class PriceInstrument(db.Model):
     pack_price = db.Column(Float)
 
     #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
-    instruments = db.relationship("Instrument", backref="pack")
+    instruments = db.relationship("Instrument", backref="pack", lazy='dynamic') # agregado nuevo sugerencia claude
     
 class Enrollment(db.Model):
     __tablename__ = 'enrollments'
@@ -101,6 +104,10 @@ def populate_database():
                 db.session.add(instrument)
             instruments.append(instrument)
             teacher.rel_instrument.append(instrument)
+    
+    db.session.flush()
+
+    db.session.commit()
             
     
     #relations
@@ -119,7 +126,7 @@ def populate_database():
     }
     
     for i, valor in relations_levels.items():
-    varinstrument = db.session.query(Instrument).filter_by(instrument=i).first()
+        varinstrument = db.session.query(Instrument).filter_by(instrument=i).first()
     if not varinstrument:
         varinstrument = Instrument(instrument=i)
         db.session.add(varinstrument)
@@ -129,6 +136,9 @@ def populate_database():
             varlevel = Level(name_level=level_name)
             db.session.add(varlevel)
         varinstrument.rel_levels.append(varlevel)  
+
+    db.session.flush()
+    db.session.commit()
 
     relations_packs = {
     "Pack_1":["Piano", "Guitarra", "Bateria", "Flauta"],
@@ -235,6 +245,8 @@ def populate_database():
         print(f"Error al crear inscripciones: {e}")
         db.session.rollback()
 
+    db.session.commit()
+
 
     def enroll_student(student_id, instrument_id):
         student = db.session.query(Student).get(student_id)
@@ -279,8 +291,9 @@ def populate_database():
             print(f"Inscripción: {enrollment.id_enrollment}, Estudiante: {enrollment.id_student}, Instrumento: {enrollment.id_instrument}")
     else:
         print("No se encontraron inscripciones para el estudiante 1")
-    
-    
+
+    db.session.commit()
+
     try:
         db.session.commit()
         print("Base de datos poblada exitosamente.")
@@ -293,5 +306,6 @@ def populate_database():
 
 def init_db(app):
     with app.app_context():
+        db.drop_all()  # Esto eliminará todas las tablas existente #se agrego nuevo sugerencia claude
         db.create_all()
         populate_database()
