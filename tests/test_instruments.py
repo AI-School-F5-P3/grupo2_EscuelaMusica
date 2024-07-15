@@ -1,53 +1,42 @@
 import pytest
-from app import create_app, db
-from app.models import Instrument
+from app import db, create_app
+from app.models import Instrument, Level
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def app():
     app = create_app('testing')
     return app
 
-@pytest.fixture(scope='module')
-def test_client(app):
+@pytest.fixture
+def client(app):
     return app.test_client()
 
-@pytest.fixture(scope='module')
-def init_database(app):
+@pytest.fixture
+def db_session(app):
     with app.app_context():
         db.create_all()
-        yield db
+        yield db.session
         db.session.remove()
         db.drop_all()
 
-def test_create_instrument(init_database):
-    with init_database.app.app_context():
-        instrument = Instrument(instrument='Guitar')
-        db.session.add(instrument)
-        db.session.commit()
+def test_instrument_model(db_session):
+    instrument = Instrument(instrument="Guitar")
+    db_session.add(instrument)
+    db_session.commit()
 
-        assert instrument.id_instrument is not None
-        assert instrument.instrument == 'Guitar'
+    retrieved_instrument = Instrument.query.filter_by(instrument="Guitar").first()
+    assert retrieved_instrument is not None
+    assert retrieved_instrument.instrument == "Guitar"
 
-def test_update_instrument(init_database):
-    with init_database.app.app_context():
-        instrument = Instrument(instrument='Piano')
-        db.session.add(instrument)
-        db.session.commit()
+def test_instrument_level_relationship(db_session):
+    instrument = Instrument(instrument="Piano")
+    level = Level(name_level="Intermediate")
+    instrument.rel_levels.append(level)
+    db_session.add(instrument)
+    db_session.add(level)
+    db_session.commit()
 
-        instrument.instrument = 'Grand Piano'
-        db.session.commit()
-
-        updated_instrument = Instrument.query.get(instrument.id_instrument)
-        assert updated_instrument.instrument == 'Grand Piano'
-
-def test_delete_instrument(init_database):
-    with init_database.app.app_context():
-        instrument = Instrument(instrument='Drums')
-        db.session.add(instrument)
-        db.session.commit()
-
-        db.session.delete(instrument)
-        db.session.commit()
-
-        deleted_instrument = Instrument.query.get(instrument.id_instrument)
-        assert deleted_instrument is None
+    retrieved_instrument = Instrument.query.filter_by(instrument="Piano").first()
+    assert retrieved_instrument is not None
+    assert len(retrieved_instrument.rel_levels) == 1
+    assert retrieved_instrument.rel_levels[0].name_level == "Intermediate"

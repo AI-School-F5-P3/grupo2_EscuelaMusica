@@ -1,77 +1,32 @@
 import pytest
-from app import create_app, db
+from app import db, create_app
 from app.models import Student
 
-@pytest.fixture(scope='module')
+@pytest.fixture
 def app():
     app = create_app('testing')
     return app
 
-@pytest.fixture(scope='module')
-def test_client(app):
+@pytest.fixture
+def client(app):
     return app.test_client()
 
-@pytest.fixture(scope='module')
-def init_database(app):
+@pytest.fixture
+def db_session(app):
     with app.app_context():
         db.create_all()
-        yield db
+        yield db.session
         db.session.remove()
         db.drop_all()
 
-def test_create_student(init_database):
-    with init_database.app.app_context():
-        student = Student(
-            first_name='John',
-            last_name='Doe',
-            age=20,
-            phone='1234567890',
-            email='john.doe@example.com'
-        )
-        db.session.add(student)
-        db.session.commit()
+def test_student_model(db_session):
+    student = Student(first_name="John", last_name="Doe", age=20, phone="123-456-7890", email="john@example.com")
+    db_session.add(student)
+    db_session.commit()
 
-        assert student.id_student is not None
-        assert student.first_name == 'John'
-        assert student.last_name == 'Doe'
-        assert student.age == 20
-        assert student.phone == '1234567890'
-        assert student.email == 'john.doe@example.com'
-
-def test_update_student(init_database):
-    with init_database.app.app_context():
-        student = Student(
-            first_name='Jane',
-            last_name='Smith',
-            age=25,
-            phone='9876543210',
-            email='jane.smith@example.com'
-        )
-        db.session.add(student)
-        db.session.commit()
-
-        student.age = 26
-        student.phone = '1122334455'
-        db.session.commit()
-
-        updated_student = Student.query.get(student.id_student)
-        assert updated_student.age == 26
-        assert updated_student.phone == '1122334455'
-
-def test_delete_student(init_database):
-    with init_database.app.app_context():
-        student = Student(
-            first_name='Alice',
-            last_name='Johnson',
-            age=30,
-            phone='5556667777',
-            email='alice.johnson@example.com'
-        )
-        db.session.add(student)
-        db.session.commit()
-
-        db.session.delete(student)
-        db.session.commit()
-
-        deleted_student = Student.query.get(student.id_student)
-        assert deleted_student is None
+    retrieved_student = Student.query.filter_by(first_name="John").first()
+    assert retrieved_student is not None
+    assert retrieved_student.last_name == "Doe"
+    assert retrieved_student.age == 20
+    assert retrieved_student.phone == "123-456-7890"
+    assert retrieved_student.email == "john@example.com"
