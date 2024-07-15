@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker 
 from sqlalchemy.orm import relationship
 from faker import Faker #pip install faker
+import random
 
 
 # Creamos una base para nuestros modelos
@@ -36,7 +37,7 @@ class Teacher(Base):
     name_teacher = Column(String(20))
     last_name=Column(String(20))
     telphone = Column(String(20))
-    email = Column(String(20))
+    email = Column(String(200))
     rel_instrument = relationship('Instrument', secondary='teachers_instruments',backref='instruments_teacher') #relación de regreso
 
 
@@ -48,8 +49,8 @@ class Instrument(Base):
     rel_levels = relationship('Level',secondary="instruments_levels", backref='back_levels')
     #enrollments = relationship('Enrollment', backref='instrument')
 
-    #Creación de una columna para que identifique Price
-    #pack_id = Column(Integer, ForeignKey('price_instrument.id_price'))
+    #Creación de una columna para que identifique Price. Lo he hecho así, usando una columna y no una tabla puente ya que es de one-to-many y se podía hacer de ambas ,aneras
+    pack_id = Column(Integer, ForeignKey('price.id_pack'))
 
 class Level(Base):
     __tablename__ = 'levels'
@@ -77,22 +78,31 @@ class InstrumentLevel(Base): ##Parece ser que no es necesario
 
 
 
-""" class PriceInstrument(Base):
-    __tablename__ = 'price_instrument'
+class PriceInstrument(Base):
+    __tablename__ = 'price'
 
-    id_price = Column(Integer, primary_key=True, autoincrement=True)
+    id_pack = Column(Integer, primary_key=True, autoincrement=True)
     pack = Column(String(10))
     pack_price = Column(Float)
 
     #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
     instruments = relationship("Instrument", backref="pack")
- """
 
+
+class Enrollment(Base):
+    __tablename__ = 'enrollments'
+    id_enrollment = Column(Integer, primary_key=True, autoincrement=True)
+    id_student = Column(Integer, ForeignKey('students.id_student'))
+    id_instrument= Column(Integer, ForeignKey('instruments.id_instrument'))
+    discount = Column(Float, default=0.0)
+    
+    student = relationship("Student", backref="enrollments")
+    instrument = relationship("Instrument", backref="enroll")
 
 
     
 # Configura la conexión a la base de datos
-engine = create_engine('mysql+pymysql://root:''@localhost:3206/academia_test')
+engine = create_engine('mysql+pymysql://root:''@localhost:3206/acad_discount')
 Session = sessionmaker(bind=engine)
 #conn=engine.connect()
 
@@ -105,12 +115,12 @@ sesion=Session()
 Base.metadata.create_all(engine)
 
 relations = {
-    "Mar":["Piano", "Guitarra", "Batería", "Flauta"],
+    "Mar":["Piano", "Guitarra", "Bateria", "Flauta"],
     "Flor":["Piano", "Guitarra"],
     "Álvaro": ["Piano"],
     "Marifé": ["Piano", "Canto"],
     "Nayara": ["Piano", "Violín", "Bajo"],
-    "Sofía": ["Percusión"]
+    "Sofía": ["Percusion"]
 }
 
 sesion = Session()
@@ -179,6 +189,53 @@ Base.metadata.create_all(engine)
 
 
 
+relations_packs = {
+    "Pack_1":["Piano", "Guitarra", "Bateria", "Flauta"],
+    "Pack_2":["Violin", "Bajo"],
+    "Pack_3": ["Clarinete","Saxofon"],
+    "Pack_4": ["Percusion", "Canto"],
+}
+
+list_packs={"Pack_1": 35, "Pack_2": 35, "Pack_3": 40, "Pack_4":40}
+for key, value in list_packs.items():
+    price = PriceInstrument(
+        pack=key,
+        pack_price=value
+    )
+    sesion.add(price)
+    
+    
+""" 
+for pack, instruments in relations_packs.items():
+    price = PriceInstrument(
+        pack=pack,
+        pack_price=list_packs[pack]
+    )
+    sesion.add(price)
+    sesion.flush()
+    for instrument_name in instruments:
+        instrument = Instrument(
+            instrument=instrument_name,
+            pack_id=price.id_pack
+        )
+        sesion.add(instrument)
+ """
+
+for pack, instruments in relations_packs.items():
+    price = sesion.query(PriceInstrument).filter_by(pack=pack).first()
+    for instrument_name in instruments:
+        instrument = sesion.query(Instrument).filter_by(instrument=instrument_name).first()
+        if not instrument:
+            instrument = Instrument(instrument=instrument_name, pack=price)
+            sesion.add(instrument)
+        else:
+            instrument.pack = price
+
+
+
+
+
+
 
 #////////////////////////////////////////////////////////////////////////////////////
 students = [
@@ -208,7 +265,7 @@ for i in range(7):
     )
     sesion.add(teacher)
 
-
+""" 
 list=["Piano", "Guitarra", "Bateria","Violin","Canto", "Flauta","Saxofon","Clarinete", "Percusión", "Bajo"]
 for i in range(len(list)):
     instruments=Instrument(
@@ -216,7 +273,7 @@ for i in range(len(list)):
     )
     sesion.add(instruments)
 
-
+ """
 
 list_level=['cero', 'iniciacion', 'medio', 'avanzado']
 for i in range(len(list_level)):
@@ -226,15 +283,54 @@ for i in range(len(list_level)):
     sesion.add(level)
 
 
+try:
+    students = sesion.query(Student).all()
+    instruments = sesion.query(Instrument).all()
+
+    if not students or not instruments:
+        print("No hay estudiantes o instrumentos en la base de datos.")
+    else:
+        for student in students:
+            instrument = random.choice(instruments)
+            enrollment = Enrollment(
+                id_student=student.id_student,
+                id_instrument=instrument.id_instrument
+            )
+            sesion.add(enrollment)
+
+    sesion.commit()
+    print("Inscripciones creadas con éxito.")
+except Exception as e:
+    print(f"Error al crear inscripciones: {e}")
+    sesion.rollback()
 
 
+""" for instrument in relations_packs[key]:
+    instrument_obj = Instrument(
+        instrument=instrument,
+        pack_id=price.id_pack
+    )
+    sesion.add(instrument_obj)
 
+ """
+
+
+#-------------------------------------------Consultas mysql para comprobar---------------------------------
 """ Es para hacer una consulta en mysql--------------
 
 SELECT t.name_teacher, i.instrument
 FROM teachers t
 JOIN teachers_instruments ti ON t.id_teacher = ti.id_teacher
 JOIN instruments i ON ti.id_instrument = i.id_instrument;
+
+
+
+
+SELECT p.pack, i.instrument
+FROM price p
+JOIN instruments i ON p.id_pack = i.pack_id
+ORDER BY p.pack;
+
 
 """
 
@@ -247,8 +343,63 @@ print(tabulate([row.__dict__ for row in result], headers="keys"))  # Imprime una
 """
 
 
+def enroll_student(student_id, instrument_id):
+    student = sesion.query(Student).get(student_id)
+    new_instrument = sesion.query(Instrument).get(instrument_id)
+    
+    # Verificar si el estudiante ya está inscrito en otro instrumento del mismo pack
+    existing_enrollments = sesion.query(Enrollment).filter_by(id_student=student_id).all()
+    for enrollment in existing_enrollments:
+        if enrollment.instrument.pack_id == new_instrument.pack_id:
+            # Aplicar descuento a ambas inscripciones
+            enrollment.discount = 0.5
+            new_enrollment = Enrollment(id_student=student_id, id_instrument=instrument_id, discount=0.5)
+            sesion.add(new_enrollment)
+            sesion.commit()
+            return "Descuento aplicado"
+    
+    # Si no hay coincidencia, crear una nueva inscripción sin descuento
+    new_enrollment = Enrollment(id_student=student_id, id_instrument=instrument_id)
+    sesion.add(new_enrollment)
+    sesion.commit()
+    return "Nueva inscripción creada"
 
 
+
+
+
+
+
+def get_final_price(enrollment_id):
+    enrollment = sesion.query(Enrollment).get(enrollment_id)
+    pack_price = enrollment.instrument.pack.pack_price
+    discount = enrollment.discount
+    return pack_price * (1 - discount)
+
+
+
+
+# Inscribimos a un estudiante en un instrumento
+result = enroll_student(student_id=1, instrument_id=1)
+print(result)
+
+# Obtener el precio final de una inscripción, cada una
+final_price = get_final_price(enrollment_id=1)
+print(f"Precio final: {final_price}")
+
+
+
+
+# Verificar las inscripciones
+enrollments = sesion.query(Enrollment).filter_by(id_student=1).all()
+if enrollments:
+    for enrollment in enrollments:
+        print(f"Inscripción: {enrollment.id_enrollment}, Estudiante: {enrollment.id_student}, Instrumento: {enrollment.id_instrument}")
+else:
+    print("No se encontraron inscripciones para el estudiante 1")
+
+
+sesion.commit()
 """ 
 Me lo saca como un diccionario
 
@@ -258,6 +409,3 @@ result = sesion.query(Student).all()
 for row in result:
     pprint(row.__dict__)  # 
 """
-
-
-
