@@ -111,4 +111,8 @@ def test_delete_enrollment(init_database):
 
         # Verificar que la inscripción se eliminó correctamente
         deleted_enrollment = Enrollment.query.get(enrollment.id_enrollment)
+<<<<<<< HEAD
         assert deleted_enrollment is None
+=======
+        assert deleted_enrollment is None
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0

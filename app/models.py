@@ -4,10 +4,17 @@ from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import Session
 from faker import Faker #pip install faker
+<<<<<<< HEAD
 from app import db
 
 # Definimos los modelos correspondientes a las tablas de la base de datos
 class Student(db.Model):
+=======
+from __init__ import db
+
+# Definimos los modelos correspondientes a las tablas de la base de datos
+class Student(db.Models):
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'students'
 
     id_student = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -18,7 +25,11 @@ class Student(db.Model):
     email = db.Column(db.String(20))
     #enrollments = relationship('Enrollment', backref='student')
     
+<<<<<<< HEAD
 class Teacher(db.Model):
+=======
+class Teacher(db.Models):
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'teachers'
 
     id_teacher = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -28,7 +39,11 @@ class Teacher(db.Model):
     email = db.Column(String(20))
     rel_instrument = db.relationship('Instrument', secondary='teachers_instruments',backref='instruments_teacher') #relación de regreso
 
+<<<<<<< HEAD
 class Instrument(db.Model):
+=======
+class Instrument(db.Models):
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'instruments'
     id_instrument = db.Column(db.Integer, primary_key=True, autoincrement=True)
     instrument = db.Column(db.String(20), nullable=False)
@@ -38,18 +53,27 @@ class Instrument(db.Model):
 
     #Creación de una columna para que identifique Price
     #pack_id = Column(Integer, ForeignKey('price_instrument.id_price'))
+<<<<<<< HEAD
 class Level(db.Model):
+=======
+class Level(db.Models):
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'levels'
     id_level = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name_level = db.Column(db.String(25))
     #----instrument_level= relationship('InstrumentLevel', backref='level') #----------------
 
+<<<<<<< HEAD
 class TeacherInstrument(db.Model): #Parece ser que no es necesario
+=======
+class TeacherInstrument(db.Models): #Parece ser que no es necesario
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'teachers_instruments'    
     id_teacher = db.Column('id_teacher',db.Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
     id_instrument = db.Column('id_instrument',db.Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
     #id_level = Column(Integer, ForeignKey('levels.id_level'))
 
+<<<<<<< HEAD
 class InstrumentLevel(db.Model): ##Parece ser que no es necesario
     __tablename__ = 'instruments_levels'
     id_instrument = db.Column(db.Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
@@ -58,6 +82,14 @@ class InstrumentLevel(db.Model): ##Parece ser que no es necesario
 
 db.create_all()
 """ class PriceInstrument(db.Model):
+=======
+class InstrumentLevel(db.Models): ##Parece ser que no es necesario
+    __tablename__ = 'instruments_levels'
+    id_instrument = db.Column(db.Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
+    id_level = db.Column(db.Integer, ForeignKey('levels.id_level'), primary_key=True)
+
+""" class PriceInstrument(db.Models):
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
     __tablename__ = 'price_instrument'
 
     id_price = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -214,4 +246,8 @@ from pprint import pprint
 result = db.session.query(Student).all()
 for row in result:
     pprint(row.__dict__)  # 
+<<<<<<< HEAD
 """
+=======
+"""
+>>>>>>> 192f38db33b52b6933ee1b3372958f77151642f0
