@@ -1,107 +1,215 @@
 from tabulate import tabulate
 from sqlalchemy import create_engine #Se usa para crear un motor de bbdd
 from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
-from sqlalchemy.orm import relationship, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from sqlalchemy.orm import sessionmaker
 from faker import Faker #pip install faker
 from __init__ import db
 
-db.Model = declarative_base()
-class Student(db.Model):
+# Definimos los modelos correspondientes a las tablas de la base de datos
+class Student(db.Models):
     __tablename__ = 'students'
 
-    id_student = Column(Integer, primary_key=True, autoincrement=True)
-    first_name = Column(String(20))
-    last_name = Column(String(20))
-    age = Column(Integer)
-    phone = Column(String(20))
-    email = Column(String(20))
+    id_student = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    first_name = db.Column(db.String(20))
+    last_name = db.Column(db.String(20))
+    age = db.Column(db.Integer)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(20))
     #enrollments = relationship('Enrollment', backref='student')
-
-    enrollments = relationship('Enrollment', backref='student')
-
-class Teacher(db.Model):
+    
+class Teacher(db.Models):
     __tablename__ = 'teachers'
 
-    id_teacher = Column(Integer, primary_key=True, autoincrement=True)
-    name_teacher = Column(String(20))
-    last_name=Column(String(20))
-    telphone = Column(String(20))
-    email = Column(String(20))
-    instruments = relationship('Instrument', secondary='teachers_instruments',backref='teacher')
+    id_teacher = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name_teacher = db.Column(db.String(20))
+    last_name = db.Column(String(20))
+    telphone = db.Column(String(20))
+    email = db.Column(String(20))
+    rel_instrument = db.relationship('Instrument', secondary='teachers_instruments',backref='instruments_teacher') #relación de regreso
 
-    #instruments = relationship('TeacherInstrument', backref='teacher')
-class Level(db.Model):
-    __tablename__ = 'levels'
-
-    id_level = Column(Integer, primary_key=True, autoincrement=True)
-    name_level = Column(String(25))
-
-    instruments = relationship('InstrumentLevel', backref='level')
-
-class Instrument(db.Model):
+class Instrument(db.Models):
     __tablename__ = 'instruments'
+    id_instrument = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    instrument = db.Column(db.String(20), nullable=False)
 
-    id_instrument = Column(Integer, primary_key=True, autoincrement=True)
-    instrument = Column(String(20), nullable=False)
-
-    teacher_instruments = relationship('TeacherInstrument', backref='instrument')
-    
-    
-    instrument_levels = relationship('Level',secondary="instruments_levels", backref='instruments')
+    rel_levels = db.relationship('Level',secondary="instruments_levels", backref='back_levels')
     #enrollments = relationship('Enrollment', backref='instrument')
 
-class TeacherInstrument(db.Model):
-    __tablename__ = 'teachers_instruments'
-    
-    id_teacher = Column('id_teacher',Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
-    id_instrument = Column('id_instrument',Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
+    #Creación de una columna para que identifique Price
+    #pack_id = Column(Integer, ForeignKey('price_instrument.id_price'))
+class Level(db.Models):
+    __tablename__ = 'levels'
+    id_level = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name_level = db.Column(db.String(25))
+    #----instrument_level= relationship('InstrumentLevel', backref='level') #----------------
+
+class TeacherInstrument(db.Models): #Parece ser que no es necesario
+    __tablename__ = 'teachers_instruments'    
+    id_teacher = db.Column('id_teacher',db.Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
+    id_instrument = db.Column('id_instrument',db.Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
     #id_level = Column(Integer, ForeignKey('levels.id_level'))
 
-class Enrollment(db.Model):
-    __tablename__ = 'enrollments'
+class InstrumentLevel(db.Models): ##Parece ser que no es necesario
+    __tablename__ = 'instruments_levels'
+    id_instrument = db.Column(db.Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
+    id_level = db.Column(db.Integer, ForeignKey('levels.id_level'), primary_key=True)
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_student = Column(Integer, ForeignKey('students.id_student'))
-    id_level = Column(Integer, ForeignKey('levels.id_level'))
-    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'))
-    id_teacher = Column(Integer, ForeignKey('teachers.id_teacher'))
-    base_price = Column(Float)
-    final_price = Column(Float)
-    family_discount = Column(Boolean)
-
-class PriceInstrument(db.Model):
+""" class PriceInstrument(db.Models):
     __tablename__ = 'price_instrument'
 
-    id_price = Column(Integer, primary_key=True, autoincrement=True)
-    pack = Column(String(10))
-    pack_price = Column(Float)
+    id_price = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    pack = db.Column(db.String(10))
+    pack_price = db.Column(db.Float)
 
     #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
-class Discount(db.Model):
-    __tablename__ = 'discount'
+    instruments = relationship("Instrument", backref="pack")
+ """
 
-    id_discount = Column(Integer, primary_key=True, autoincrement=True)
-    group_discount = Column(Enum('pack1', 'pack2', 'pack3'))
-    count_instrument = Column(Integer)
-    discount_percentage = Column(Float)
 
-    enrollments = relationship('Enrollment', secondary='discount_enrollments', backref='discount')
 
-class InstrumentLevel(db.Model):
-    __tablename__ = 'instruments_levels'
+    
+# Configura la conexión a la base de datos
+#engine = create_engine('mysql+pymysql://root:"Fausto-007"@localhost:3306/')
+#Session = sessionmaker(bind=engine)
+#conn=engine.connect()
 
-    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
-    id_level = Column(Integer, ForeignKey('levels.id_level'), primary_key=True)
+#def get_session():
+    #return db.session()
 
-class PriceInstrumentEnrollment(db.Model):
-    __tablename__ = 'price_instrument_enrollments'
+#db.session=Session()
+#-------------------------| FIN de creación de estructuras tablas |------------------
+#Hay que añadirle esto
+#db.Models.metadata.create_all(engine)
 
-    price_instrument_pack = Column(Enum('pack1', 'pack2', 'pack3'), primary_key=True)
-    enrollments_base_price = Column(Float, primary_key=True)
+relations = {
+    "Mar":["Piano", "Guitarra", "Batería", "Flauta"],
+    "Flor":["Piano", "Guitarra"],
+    "Álvaro": ["Piano"],
+    "Marifé": ["Piano", "Canto"],
+    "Nayara": ["Piano", "Violín", "Bajo"],
+    "Sofía": ["Percusión"]
+}
 
-class DiscountEnrollment(db.Model):
-    __tablename__ = 'discount_enrollments'
+#db.session = Session()
 
-    discount_discount_percentage = Column(Float, primary_key=True)
-    enrollments_final_price = Column(Float, primary_key=True)
+
+teachers = []
+instruments = []
+
+for name, instrument_list in relations.items():
+    teacher = Teacher(name_teacher=name)
+    db.session.add(teacher)
+    teachers.append(teacher)
+    
+    for instrument_name in instrument_list:
+        instrument = db.session.query(Instrument).filter_by(instrument=instrument_name).first()
+        if not instrument:
+            instrument = Instrument(instrument=instrument_name)
+            db.session.add(instrument)
+        instruments.append(instrument)
+        teacher.rel_instrument.append(instrument)
+
+db.session.flush() #guardar las relaciones en la tabla puente utilizando el método flush de la sesión.
+
+#--------| Commit the changes ----------
+db.session.commit()
+
+#------| Crea las tablas en la base de datos si no existen  |-------------
+#db.Models.metadata.create_all(engine)
+
+#*********************************** RELATIONS *****************************
+relations_levels= {
+    "Piano":["Cero", "Iniciación", "Medio", "Avanzado"],
+    "Guitarra":["Iniciación", "Medio"],
+    "Batería": ["Iniciación", "Medio", "Avanzado"],
+    "Flauta": ["Iniciación", "Medio"],
+    "Bajo": ["Iniciación", "Medio"],
+    "Violin": ["Cero"],
+    "Canto":["Cero"],
+    "Saxofon":["Cero"],
+    "Clarinete":["Cero"],
+    "Percusion":["Cero"]
+    }
+        
+for i, valor in relations_levels.items():
+    varinstrument = db.session.query(Instrument).filter_by(instrument=i).first()
+    if not varinstrument:
+        varinstrument = Instrument(instrument=i)
+        db.session.add(varinstrument)
+    for level_name in valor:
+        varlevel = db.session.query(Level).filter_by(name_level=level_name).first()
+        if not varlevel:
+            varlevel = Level(name_level=level_name)
+            db.session.add(varlevel)
+        varinstrument.rel_levels.append(varlevel)        
+                
+db.session.flush()
+db.session.commit()
+#db.Models.metadata.create_all(engine)
+
+#////////////////////////////////////////////////////////////////////////////////////
+students = [
+    {"first_name": "John", "last_name": "Doe", "age": 20, "phone": "123-456-7890", "email": "john.doe@example.com"},
+    {"first_name": "Jane", "last_name": "Smith", "age": 22, "phone": "098-765-4321", "email": "jane.smith@example.com"},
+    {"first_name": "Michael", "last_name": "Johnson", "age": 25, "phone": "555-123-4567", "email": "michael.johnson@example.com"},
+    {"first_name": "Emily", "last_name": "Williams", "age": 21, "phone": "789-012-3456", "email": "emily.williams@example.com"},
+ ]
+
+for student in students:
+    new_student = Student(**student)
+    db.session.add(new_student)
+db.session.commit()
+
+result = db.session.query(Student).all()
+
+fake=Faker()
+names=["Mar", "Flor", "Nayara", "Marifé", "Álvaro", "Nieves", "Sofía"]
+for i in range(7):
+    teacher=Teacher(
+      name_teacher=names[i],
+      last_name=fake.last_name(),
+      telphone=fake.phone_number(),
+      email=fake.email()
+    )
+    db.session.add(teacher)
+
+list=["Piano", "Guitarra", "Bateria","Violin","Canto", "Flauta","Saxofon","Clarinete", "Percusión", "Bajo"]
+for i in range(len(list)):
+    instruments=Instrument(
+        instrument=list[i]
+    )
+    db.session.add(instruments)
+
+list_level=['cero', 'iniciacion', 'medio', 'avanzado']
+for i in range(len(list_level)):
+    level=Level(
+        name_level=list_level[i]
+    )
+    db.session.add(level)
+
+""" Es para hacer una consulta en mysql--------------
+
+SELECT t.name_teacher, i.instrument
+FROM teachers t
+JOIN teachers_instruments ti ON t.id_teacher = ti.id_teacher
+JOIN instruments i ON ti.id_instrument = i.id_instrument;
+
+"""
+db.session.commit()
+
+""" 
+result = db.session.query(Student).all()
+print(tabulate([row.__dict__ for row in result], headers="keys"))  # Imprime una tabla con los atributos y valores
+
+"""
+
+""" 
+Me lo saca como un diccionario
+
+from pprint import pprint
+
+result = db.session.query(Student).all()
+for row in result:
+    pprint(row.__dict__)  # 
+"""
