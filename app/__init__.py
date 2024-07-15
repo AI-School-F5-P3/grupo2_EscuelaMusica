@@ -41,10 +41,6 @@ def create_app(config_name='default'):
     from app.routes.instruments import instruments_bp
     from app.routes.enrollments import enrollments_bp
 
-<<<<<<< HEAD
-from app.utils.app_logging import setup_logging
-setup_logging()
-=======
     app.register_blueprint(students_bp)
     app.register_blueprint(teachers_bp)
     app.register_blueprint(levels_bp)
@@ -56,4 +52,3 @@ setup_logging()
 if __name__ == '__main__':
     app = create_app(os.getenv('FLASK_ENV', 'development'))
     app.run()
->>>>>>> Jaanh

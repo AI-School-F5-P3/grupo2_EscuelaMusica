@@ -1,129 +1,141 @@
-from tabulate import tabulate
-from sqlalchemy import create_engine #Se usa para crear un motor de bbdd
-from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
-from sqlalchemy.orm import relationship, sessionmaker
-<<<<<<< HEAD
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import delete
+from sqlalchemy.exc import IntegrityError
+from faker import Faker
 
-# Creamos una db.Model para nuestros modelos
-
-
-# Crear la instancia de SQLAlchemy
 db = SQLAlchemy()
 
-# Definimos los modelos correspondientes a las tablas de la db.Model de datos
-=======
-from sqlalchemy.ext.declarative import declarative_base
-from faker import Faker #pip install faker
-from __init__ import db
-
-db.Model = declarative_base()
->>>>>>> Jaanh
+# Definición de modelos
 class Student(db.Model):
     __tablename__ = 'students'
-
-    id_student = Column(Integer, primary_key=True, autoincrement=True)
-    first_name = Column(String(20))
-    last_name = Column(String(20))
-    age = Column(Integer)
-    phone = Column(String(20))
-    email = Column(String(20))
-    #enrollments = relationship('Enrollment', backref='student')
-
-    enrollments = relationship('Enrollment', backref='student')
+    id_student = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    first_name = db.Column(db.String(20))
+    last_name = db.Column(db.String(20))
+    age = db.Column(db.Integer)
+    phone = db.Column(db.String(20))
+    email = db.Column(db.String(20))
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
-
-    id_teacher = Column(Integer, primary_key=True, autoincrement=True)
-    name_teacher = Column(String(20))
-    last_name=Column(String(20))
-    telphone = Column(String(20))
-    email = Column(String(20))
-    instruments = relationship('Instrument', secondary='teachers_instruments',backref='teacher')
-
-    #instruments = relationship('TeacherInstrument', backref='teacher')
-class Level(db.Model):
-    __tablename__ = 'levels'
-
-    id_level = Column(Integer, primary_key=True, autoincrement=True)
-    name_level = Column(String(25))
-
-    instruments = relationship('InstrumentLevel', backref='level')
+    id_teacher = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name_teacher = db.Column(db.String(20))
+    last_name = db.Column(db.String(20))
+    telphone = db.Column(db.String(20))
+    email = db.Column(db.String(20))
+    rel_instrument = db.relationship('Instrument', secondary='teachers_instruments', backref='instruments_teacher')
 
 class Instrument(db.Model):
     __tablename__ = 'instruments'
+    id_instrument = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    instrument = db.Column(db.String(20), nullable=False)
+    rel_levels = db.relationship('Level', secondary="instruments_levels", backref='back_levels')
 
-    id_instrument = Column(Integer, primary_key=True, autoincrement=True)
-    instrument = Column(String(20), nullable=False)
-
-    teacher_instruments = relationship('TeacherInstrument', backref='instrument')
-    
-    
-    instrument_levels = relationship('Level',secondary="instruments_levels", backref='instruments')
-    #enrollments = relationship('Enrollment', backref='instrument')
+class Level(db.Model):
+    __tablename__ = 'levels'
+    id_level = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name_level = db.Column(db.String(25))
 
 class TeacherInstrument(db.Model):
     __tablename__ = 'teachers_instruments'
-    
-    id_teacher = Column('id_teacher',Integer, ForeignKey('teachers.id_teacher'), primary_key=True)
-    id_instrument = Column('id_instrument',Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
-    #id_level = Column(Integer, ForeignKey('levels.id_level'))
-
-class Enrollment(db.Model):
-    __tablename__ = 'enrollments'
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    id_student = Column(Integer, ForeignKey('students.id_student'))
-    id_level = Column(Integer, ForeignKey('levels.id_level'))
-    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'))
-    id_teacher = Column(Integer, ForeignKey('teachers.id_teacher'))
-    base_price = Column(Float)
-    final_price = Column(Float)
-    family_discount = Column(Boolean)
-
-class PriceInstrument(db.Model):
-    __tablename__ = 'price_instrument'
-
-    id_price = Column(Integer, primary_key=True, autoincrement=True)
-    pack = Column(String(10))
-    pack_price = Column(Float)
-
-    #enrollments = relationship('Enrollment', secondary='price_instrument_enrollments', backref='price_instrument')
-class Discount(db.Model):
-    __tablename__ = 'discount'
-
-    id_discount = Column(Integer, primary_key=True, autoincrement=True)
-    group_discount = Column(Enum('pack1', 'pack2', 'pack3'))
-    count_instrument = Column(Integer)
-    discount_percentage = Column(Float)
-
-    enrollments = relationship('Enrollment', secondary='discount_enrollments', backref='discount')
+    id_teacher = db.Column('id_teacher', db.Integer, db.ForeignKey('teachers.id_teacher'), primary_key=True)
+    id_instrument = db.Column('id_instrument', db.Integer, db.ForeignKey('instruments.id_instrument'), primary_key=True)
 
 class InstrumentLevel(db.Model):
     __tablename__ = 'instruments_levels'
+    id_instrument = db.Column(db.Integer, db.ForeignKey('instruments.id_instrument'), primary_key=True)
+    id_level = db.Column(db.Integer, db.ForeignKey('levels.id_level'), primary_key=True)
 
-    id_instrument = Column(Integer, ForeignKey('instruments.id_instrument'), primary_key=True)
-    id_level = Column(Integer, ForeignKey('levels.id_level'), primary_key=True)
+def reset_database():
+    db.session.execute(delete(InstrumentLevel))
+    db.session.execute(delete(TeacherInstrument))
+    db.session.execute(delete(Level))
+    db.session.execute(delete(Instrument))
+    db.session.execute(delete(Teacher))
+    db.session.execute(delete(Student))
+    db.session.commit()
 
-class PriceInstrumentEnrollment(db.Model):
-    __tablename__ = 'price_instrument_enrollments'
+def populate_database():
+    reset_database()
+    db.create_all()
 
-    price_instrument_pack = Column(Enum('pack1', 'pack2', 'pack3'), primary_key=True)
-    enrollments_base_price = Column(Float, primary_key=True)
+    relations = {
+        "Mar": ["Piano", "Guitarra", "Batería", "Flauta"],
+        "Flor": ["Piano", "Guitarra"],
+        "Álvaro": ["Piano"],
+        "Marifé": ["Piano", "Canto"],
+        "Nayara": ["Piano", "Violín", "Bajo"],
+        "Sofía": ["Percusión"]
+    }
 
-class DiscountEnrollment(db.Model):
-    __tablename__ = 'discount_enrollments'
+    for name, instrument_list in relations.items():
+        teacher = Teacher(name_teacher=name)
+        db.session.add(teacher)
+        for instrument_name in instrument_list:
+            instrument = Instrument.query.filter_by(instrument=instrument_name).first()
+            if not instrument:
+                instrument = Instrument(instrument=instrument_name)
+                db.session.add(instrument)
+            teacher.rel_instrument.append(instrument)
 
-    discount_discount_percentage = Column(Float, primary_key=True)
-    enrollments_final_price = Column(Float, primary_key=True)
-<<<<<<< HEAD
+    relations_levels = {
+        "Piano": ["Cero", "Iniciación", "Medio", "Avanzado"],
+        "Guitarra": ["Iniciación", "Medio"],
+        "Batería": ["Iniciación", "Medio", "Avanzado"],
+        "Flauta": ["Iniciación", "Medio"],
+        "Bajo": ["Iniciación", "Medio"],
+        "Violin": ["Cero"],
+        "Canto": ["Cero"],
+        "Saxofon": ["Cero"],
+        "Clarinete": ["Cero"],
+        "Percusion": ["Cero"]
+    }
 
-# Configura la conexión a la db.Model de datos
-engine = create_engine('mysql://root:1319@localhost/armonia1')
-Session = sessionmaker(bind=engine)
+    for instrument_name, level_names in relations_levels.items():
+        instrument = Instrument.query.filter_by(instrument=instrument_name).first()
+        if not instrument:
+            instrument = Instrument(instrument=instrument_name)
+            db.session.add(instrument)
+        for level_name in level_names:
+            level = Level.query.filter_by(name_level=level_name).first()
+            if not level:
+                level = Level(name_level=level_name)
+                db.session.add(level)
+            instrument.rel_levels.append(level)
 
-# Crea las tablas en la db.Model de datos si no existen
-db.Model.metadata.create_all(engine)
-=======
->>>>>>> Jaanh
+    students = [
+        {"first_name": "John", "last_name": "Doe", "age": 20, "phone": "123-456-7890", "email": "john.doe@example.com"},
+        {"first_name": "Jane", "last_name": "Smith", "age": 22, "phone": "098-765-4321", "email": "jane.smith@example.com"},
+        {"first_name": "Michael", "last_name": "Johnson", "age": 25, "phone": "555-123-4567", "email": "michael.johnson@example.com"},
+        {"first_name": "Emily", "last_name": "Williams", "age": 21, "phone": "789-012-3456", "email": "emily.williams@example.com"},
+    ]
+
+    for student_data in students:
+        student = Student(**student_data)
+        db.session.add(student)
+
+    fake = Faker()
+    names = ["Mar", "Flor", "Nayara", "Marifé", "Álvaro", "Nieves", "Sofía"]
+    for name in names:
+        teacher = Teacher(
+            name_teacher=name,
+            last_name=fake.last_name(),
+            telphone=fake.phone_number(),
+            email=fake.email()
+        )
+        db.session.add(teacher)
+
+    try:
+        db.session.commit()
+        print("Base de datos poblada exitosamente.")
+    except IntegrityError as e:
+        db.session.rollback()
+        print(f"Error de integridad: {str(e)}")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error inesperado: {str(e)}")
+
+def init_db(app):
+    with app.app_context():
+        db.create_all()
+        populate_database()

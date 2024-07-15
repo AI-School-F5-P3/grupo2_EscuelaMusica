@@ -56,8 +56,4 @@ def delete_level(level_id):
         return level_schema.jsonify(level)
     except Exception as e:
         logging.error(f"Error al eliminar el nivel: {e}")
-<<<<<<< HEAD
         return "Error deleting level", 500
-=======
-        return "Error deleting level", 500
->>>>>>> Jaanh

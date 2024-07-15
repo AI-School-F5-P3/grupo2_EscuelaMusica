@@ -1,15 +1,12 @@
 import os
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY', 'default_secret_key')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-<<<<<<< HEAD
-    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY')
-    
-=======
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'default_jwt_secret_key')
 
 class DevelopmentConfig(Config):
@@ -31,4 +28,3 @@ config_dict = {
     'production': ProductionConfig,
     'default': DevelopmentConfig
 }
->>>>>>> Jaanh

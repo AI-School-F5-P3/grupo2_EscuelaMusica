@@ -1,60 +1,45 @@
 import pytest
-from app import create_app, db
-from app.models import Teacher
+from app import db, create_app
+from app.models import Teacher, Instrument
 
-<<<<<<< HEAD
-class TestTeacher(pytest.TestCase):
-    def setUp(self):
-        # Configurar la conexión a la base de datos para las pruebas
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql:///:armonia1:'
-=======
-@pytest.fixture(scope='module')
+
+@pytest.fixture
 def app():
     app = create_app('testing')
     return app
 
-@pytest.fixture(scope='module')
-def test_client(app):
+@pytest.fixture
+def client(app):
     return app.test_client()
 
-@pytest.fixture(scope='module')
-def init_database(app):
+@pytest.fixture
+def db_session(app):
     with app.app_context():
->>>>>>> Jaanh
         db.create_all()
-        yield db
+        yield db.session
         db.session.remove()
         db.drop_all()
 
-def test_create_teacher(init_database):
-    with init_database.app.app_context():
-        teacher = Teacher(name_teacher='Maria Garcia')
-        db.session.add(teacher)
-        db.session.commit()
+def test_teacher_model(db_session):
+    teacher = Teacher(name_teacher="Jane", last_name="Smith", telphone="987-654-3210", email="jane@example.com")
+    db_session.add(teacher)
+    db_session.commit()
 
-        assert teacher.id_teacher is not None
-        assert teacher.name_teacher == 'Maria Garcia'
+    retrieved_teacher = Teacher.query.filter_by(name_teacher="Jane").first()
+    assert retrieved_teacher is not None
+    assert retrieved_teacher.last_name == "Smith"
+    assert retrieved_teacher.telphone == "987-654-3210"
+    assert retrieved_teacher.email == "jane@example.com"
 
-def test_update_teacher(init_database):
-    with init_database.app.app_context():
-        teacher = Teacher(name_teacher='John Smith')
-        db.session.add(teacher)
-        db.session.commit()
+def test_teacher_instrument_relationship(db_session):
+    teacher = Teacher(name_teacher="Bob", last_name="Johnson")
+    instrument = Instrument(instrument="Piano")
+    teacher.rel_instrument.append(instrument)
+    db_session.add(teacher)
+    db_session.add(instrument)
+    db_session.commit()
 
-        teacher.name_teacher = 'John A. Smith'
-        db.session.commit()
-
-        updated_teacher = Teacher.query.get(teacher.id_teacher)
-        assert updated_teacher.name_teacher == 'John A. Smith'
-
-def test_delete_teacher(init_database):
-    with init_database.app.app_context():
-        teacher = Teacher(name_teacher='Emily Brown')
-        db.session.add(teacher)
-        db.session.commit()
-
-        db.session.delete(teacher)
-        db.session.commit()
-
-        deleted_teacher = Teacher.query.get(teacher.id_teacher)
-        assert deleted_teacher is None
+    retrieved_teacher = Teacher.query.filter_by(name_teacher="Bob").first()
+    assert retrieved_teacher is not None
+    assert len(retrieved_teacher.rel_instrument) == 1
+    assert retrieved_teacher.rel_instrument[0].instrument == "Piano"
