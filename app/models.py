@@ -2,7 +2,7 @@ from tabulate import tabulate
 from sqlalchemy import create_engine #Se usa para crear un motor de bbdd
 from sqlalchemy import Column, Integer, String, Boolean, Float, Enum, ForeignKey, create_engine
 from sqlalchemy.orm import relationship
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session
 from faker import Faker #pip install faker
 from __init__ import db
 
