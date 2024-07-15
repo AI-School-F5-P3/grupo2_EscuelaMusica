@@ -10,6 +10,11 @@ from urllib.parse import quote_plus
 import pymysql
 pymysql.install_as_MySQLdb()
 import os
+import sys #puse esto
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #puse esto
+
+
 
 # Cargar variables de entorno
 load_dotenv()
@@ -18,6 +23,15 @@ db = SQLAlchemy()
 ma = Marshmallow()
 jwt = JWTManager()
 migrate = Migrate()
+
+password = quote_plus("rocio99")
+engine = create_engine(f'mysql+pymysql://root:{password}@localhost:3306/armonia_utopia', pool_pre_ping=True)
+Session = sessionmaker(bind=engine)
+
+# Crea las tablas en la base de datos si no existen
+db.metadata.create_all(engine)
+
+
 
 def create_app(config_name='default'):
     app = Flask(__name__)
