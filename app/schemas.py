@@ -78,4 +78,8 @@ enrollments_schema = EnrollmentSchema(many=True)
 price_instrument_schema = PriceInstrumentSchema()
 price_instruments_schema = PriceInstrumentSchema(many=True)
 instrument_level_schema = InstrumentLevelSchema()
+<<<<<<< Updated upstream
 instruments_levels_schema = InstrumentLevelSchema(many=True)
+=======
+instruments_levels_schema = InstrumentLevelSchema(many=True)
+>>>>>>> Stashed changes
