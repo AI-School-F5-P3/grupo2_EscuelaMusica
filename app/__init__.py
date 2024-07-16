@@ -11,6 +11,7 @@ import pymysql
 pymysql.install_as_MySQLdb()
 import os
 import sys #puse esto
+from app.utils.app_logging import setup_logger #añadi esto alejandra
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #puse esto
 
@@ -39,18 +40,23 @@ def create_app(config_name='default'):
     jwt.init_app(app)
     migrate.init_app(app, db)
 
+    # Configuración del logger
+    setup_logger(app)  #lo añadi alejandra claude
+
     # Registrar rutas
     from app.routes.students import students_bp
     from app.routes.teachers import teachers_bp
     from app.routes.levels import levels_bp
     from app.routes.instruments import instruments_bp
     from app.routes.enrollments import enrollments_bp
+    from app.routes.auth import auth_bp #lo añadi alejandra claude
 
     app.register_blueprint(students_bp)
     app.register_blueprint(teachers_bp)
     app.register_blueprint(levels_bp)
     app.register_blueprint(instruments_bp)
     app.register_blueprint(enrollments_bp)
+    app.register_blueprint(auth_bp) #lo añadi alejandra claude
 
     return app
 

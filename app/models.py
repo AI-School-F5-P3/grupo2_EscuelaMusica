@@ -5,10 +5,26 @@ from sqlalchemy import Float, ForeignKey, delete
 from sqlalchemy.exc import IntegrityError
 from faker import Faker
 from sqlalchemy import Float, ForeignKey #se agrego neuvo sugerencia claude
+from flask_login import UserMixin #añadi yo alejandra claude . INstalé flask_login
+from werkzeug.security import generate_password_hash, check_password_hash #añadi yo alejandra claude, instale werkzeug
 
 db = SQLAlchemy()
 
 # Definición de modelos
+
+class User(db.Model, UserMixin): #yo alejandra añadi claude todo el codigo hasta donde dice aquí
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255))
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password) #hasta aquí
+
+
+
 class Student(db.Model):
     __tablename__ = 'students'
     id_student = db.Column(db.Integer, primary_key=True, autoincrement=True)

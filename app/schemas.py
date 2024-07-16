@@ -1,5 +1,5 @@
 from app import ma
-from app.models import Student, Teacher, Level, Instrument, Enrollment, PriceInstrument, Discount, InstrumentLevel, PriceInstrumentEnrollment, DiscountEnrollment
+from app.models import Student, Teacher, Level, Instrument, Enrollment, PriceInstrument, InstrumentLevel, TeacherInstrument
 from marshmallow import fields
 
 class StudentSchema(ma.SQLAlchemyAutoSchema):
@@ -18,6 +18,11 @@ class TeacherSchema(ma.SQLAlchemyAutoSchema):
     id_teacher = ma.auto_field(dump_only=True)
     instruments = fields.Nested('TeacherInstrumentSchema', many=True, exclude=('teacher',))
 
+    class TeacherInstrumentSchema(ma.SQLAlchemyAutoSchema):
+        class Meta:
+            model = TeacherInstrument
+            include_fk = True
+            load_instance = True
 class LevelSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = Level
@@ -41,7 +46,7 @@ class EnrollmentSchema(ma.SQLAlchemyAutoSchema):
         model = Enrollment
         include_fk = True
         load_instance = True
-    id = ma.auto_field(dump_only=True)
+    id_enrollment = ma.auto_field(dump_only=True)
     student = fields.Nested(StudentSchema, exclude=('enrollments',))
     instrument = fields.Nested(InstrumentSchema, exclude=('enrollments',))
     teacher = fields.Nested(TeacherSchema, exclude=('instruments',))
@@ -52,30 +57,10 @@ class PriceInstrumentSchema(ma.SQLAlchemyAutoSchema):
         model = PriceInstrument
         include_fk = True
         load_instance = True
-    id_price = ma.auto_field(dump_only=True)
-
-class DiscountSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Discount
-        include_fk = True
-        load_instance = True
-    id_discount = ma.auto_field(dump_only=True)
-
+    id_pack = ma.auto_field(dump_only=True)
 class InstrumentLevelSchema(ma.SQLAlchemyAutoSchema):
     class Meta:
         model = InstrumentLevel
-        include_fk = True
-        load_instance = True
-
-class PriceInstrumentEnrollmentSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = PriceInstrumentEnrollment
-        include_fk = True
-        load_instance = True
-
-class DiscountEnrollmentSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = DiscountEnrollment
         include_fk = True
         load_instance = True
 
@@ -92,11 +77,5 @@ enrollment_schema = EnrollmentSchema()
 enrollments_schema = EnrollmentSchema(many=True)
 price_instrument_schema = PriceInstrumentSchema()
 price_instruments_schema = PriceInstrumentSchema(many=True)
-discount_schema = DiscountSchema()
-discounts_schema = DiscountSchema(many=True)
 instrument_level_schema = InstrumentLevelSchema()
 instruments_levels_schema = InstrumentLevelSchema(many=True)
-price_instrument_enrollment_schema = PriceInstrumentEnrollmentSchema()
-price_instrument_enrollments_schema = PriceInstrumentEnrollmentSchema(many=True)
-discount_enrollment_schema = DiscountEnrollmentSchema()
-discount_enrollments_schema = DiscountEnrollmentSchema(many=True)

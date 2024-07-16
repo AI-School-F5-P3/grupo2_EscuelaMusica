@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -11,7 +10,12 @@ def setup_logger(app):
     if not app.debug or app.testing:
         log_dir = os.path.join(app.root_path, 'logs')
         if not os.path.exists(log_dir):
-            os.mkdir(log_dir)
+            try:  #añadi alejandra
+                #os.mkdir(log_dir)
+                os.makedirs(log_dir)
+                print(f"Carpeta 'logs' creada en: {log_dir}") #añadi alejandra
+            except Exception as e:  #añadi alejandra
+                print(f"No se pudo crear la carpeta 'logs': {e}")    #añadi alejandra
         log_file = os.path.join(log_dir, 'app.log')
         
         file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
@@ -62,33 +66,4 @@ def log_warning(message):
 def log_debug(message):
     """Función para loguear mensajes de debug."""
     current_app.logger.debug(message)
-def log_debug(message):
-    """Función para loguear mensajes de debug."""
-    logger.debug(message)
-=======
-import logging
-from logging.handlers import RotatingFileHandler
-from flask import request
-from flask_jwt_extended import get_jwt_identity
 
-class JWTRequestFormatter(logging.Formatter):
-    def format(self, record):
-        record.url = request.url
-        record.method = request.method
-        record.remote_addr = request.remote_addr
-        record.user_id = get_jwt_identity() or 'Anonymous'
-        return super().format(record)
-
-def setup_logging(app):
-    """
-    Configura el logging para la aplicación.
-    
-    :param app: La instancia de la aplicación Flask
-    """
-    handler = RotatingFileHandler('app.log', maxBytes=10000, backupCount=1)
-    handler.setLevel(logging.INFO)
-    formatter = JWTRequestFormatter('%(asctime)s - %(name)s - %(levelname)s - %(method)s %(url)s (%(remote_addr)s) - User: %(user_id)s - %(message)s')
-    handler.setFormatter(formatter)
-    app.logger.addHandler(handler)
-    app.logger.setLevel(logging.INFO)
->>>>>>> Jaanh
