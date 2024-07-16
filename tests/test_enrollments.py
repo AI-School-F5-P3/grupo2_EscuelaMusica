@@ -1,23 +1,6 @@
 import pytest
-from app import create_app, db
+from app import create_app
 from app.models import Enrollment, Student, Level, Instrument, Teacher
-
-@pytest.fixture(scope='module')
-def app():
-    app = create_app('testing')
-    return app
-
-@pytest.fixture(scope='module')
-def test_client(app):
-    return app.test_client()
-
-@pytest.fixture(scope='module')
-def init_database(app):
-    with app.app_context():
-        db.create_all()
-        yield db
-        db.session.remove()
-        db.drop_all()
 
 def test_create_enrollment(init_database):
     with init_database.app.app_context():
@@ -26,8 +9,8 @@ def test_create_enrollment(init_database):
         level = Level(name_level='Iniciación')
         instrument = Instrument(instrument='Piano')
         teacher = Teacher(name_teacher='Maria Gomez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+        init_database.session.add_all([student, level, instrument, teacher])
+        init_database.session.commit()
 
         # Crear una nueva inscripción
         enrollment = Enrollment(
@@ -39,8 +22,8 @@ def test_create_enrollment(init_database):
             final_price=35.0,
             family_discount=False
         )
-        db.session.add(enrollment)
-        db.session.commit()
+        init_database.session.add(enrollment)
+        init_database.session.commit()
 
         # Verificar que la inscripción se creó correctamente
         assert enrollment.id_student == student.id_student
@@ -58,8 +41,8 @@ def test_update_enrollment(init_database):
         level = Level(name_level='Avanzado')
         instrument = Instrument(instrument='Guitarra')
         teacher = Teacher(name_teacher='Carlos Rodriguez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+        init_database.session.add_all([student, level, instrument, teacher])
+        init_database.session.commit()
 
         enrollment = Enrollment(
             id_student=student.id_student,
@@ -70,13 +53,13 @@ def test_update_enrollment(init_database):
             final_price=40.0,
             family_discount=False
         )
-        db.session.add(enrollment)
-        db.session.commit()
+        init_database.session.add(enrollment)
+        init_database.session.commit()
 
         # Actualizar la inscripción
         enrollment.final_price = 35.0
         enrollment.family_discount = True
-        db.session.commit()
+        init_database.session.commit()
 
         # Verificar que la inscripción se actualizó correctamente
         updated_enrollment = Enrollment.query.get(enrollment.id_enrollment)
@@ -90,8 +73,8 @@ def test_delete_enrollment(init_database):
         level = Level(name_level='Intermedio')
         instrument = Instrument(instrument='Violín')
         teacher = Teacher(name_teacher='Laura Martinez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+        init_database.session.add_all([student, level, instrument, teacher])
+        init_database.session.commit()
 
         enrollment = Enrollment(
             id_student=student.id_student,
@@ -102,12 +85,13 @@ def test_delete_enrollment(init_database):
             final_price=45.0,
             family_discount=False
         )
-        db.session.add(enrollment)
-        db.session.commit()
+        init_database.session.add(enrollment)
+        init_database.session.commit()
 
         # Eliminar la inscripción
-        db.session.delete(enrollment)
-        db.session.commit()
+        init_database.session.delete(enrollment)
+        init_database.session.commit()
 
         # Verificar que la inscripción se eliminó correctamente
         deleted_enrollment = Enrollment.query.get(enrollment.id_enrollment)
+        assert deleted_enrollment is None
