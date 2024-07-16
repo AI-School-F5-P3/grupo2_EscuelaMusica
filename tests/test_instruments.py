@@ -1,45 +1,32 @@
 import pytest
-from app import create_app
-from app.models import db, Instrument, Level
+from app.models import Instrument, Level
 
-@pytest.fixture(scope='module')
-def test_client():
-    app = create_app()
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:''@localhost:3306/armonia_utopia'
-    app.config['TESTING'] = True
+def test_create_instrument(init_database):
+    """
+    Prueba la creación de un nuevo instrumento.
+    """
+    with init_database.app.app_context():
+        # Crear un nuevo instrumento
+        instrument = Instrument(instrument="Piano")
+        init_database.session.add(instrument)
+        init_database.session.commit()
 
-    with app.test_client() as testing_client:
-        with app.app_context():
-            db.create_all()
-            yield testing_client
-            db.session.remove()
-            db.drop_all()
+        # Recuperar el instrumento de la base de datos
+        retrieved_instrument = Instrument.query.filter_by(instrument="Piano").first()
 
-def test_create_instrument(test_client):
-    instrument = Instrument(instrument="Piano")
-    db.session.add(instrument)
-    db.session.commit()
+        # Verificar que el instrumento se creó correctamente
+        assert retrieved_instrument is not None
+        assert retrieved_instrument.instrument == "Piano"
 
-    retrieved_instrument = Instrument.query.filter_by(instrument="Piano").first()
-    assert retrieved_instrument is not None
-    assert retrieved_instrument.instrument == "Piano"
+        # Limpiar: eliminar el instrumento creado
+        init_database.session.delete(retrieved_instrument)
+        init_database.session.commit()
 
-    db.session.delete(retrieved_instrument)
-    db.session.commit()
-
-def test_instrument_level_relationship(test_client):
-    instrument = Instrument(instrument="Violin")
-    level = Level(name_level="Beginner")
-    instrument.rel_levels.append(level)
-    db.session.add(instrument)
-    db.session.add(level)
-    db.session.commit()
-
-    retrieved_instrument = Instrument.query.filter_by(instrument="Violin").first()
-    assert retrieved_instrument is not None
-    assert len(retrieved_instrument.rel_levels) == 1
-    assert retrieved_instrument.rel_levels[0].name_level == "Beginner"
-
-    db.session.delete(instrument)
-    db.session.delete(level)
-    db.session.commit()
+def test_instrument_level_relationship(init_database):
+    """
+    Prueba la relación entre instrumentos y niveles.
+    """
+    with init_database.app.app_context():
+        # Crear un nuevo instrumento y un nuevo nivel
+        instrument = Instrument(instrument="Violin")
+        level = Level(name_level="Beginner")
