@@ -5,11 +5,13 @@ from tabulate import tabulate #pip install tabulate
 #Importación de los módulos
 from sqlalchemy import create_engine #Se usa para crear un motor de bbdd
 from sqlalchemy import Column, Integer, String, Float, Enum, Boolean, ForeignKey
+from sqlalchemy import Date
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker 
 from sqlalchemy.orm import relationship
 from faker import Faker #pip install faker
 import random
+from datetime import date
 
 
 # Creamos una base para nuestros modelos
@@ -94,7 +96,12 @@ class Enrollment(Base):
     id_enrollment = Column(Integer, primary_key=True, autoincrement=True)
     id_student = Column(Integer, ForeignKey('students.id_student'))
     id_instrument= Column(Integer, ForeignKey('instruments.id_instrument'))
+    
     discount = Column(Float, default=0.0)
+    enrollment_date = Column(Date, default=date.today) #creé la columna para registrar la fecha
+    name_student=Column(String(20))
+    lastname_student=Column(String(20))
+    family=Column(Boolean)
     
     student = relationship("Student", backref="enrollments")
     instrument = relationship("Instrument", backref="enroll")
@@ -102,7 +109,7 @@ class Enrollment(Base):
 
     
 # Configura la conexión a la base de datos
-engine = create_engine('mysql+pymysql://root:''@localhost:3206/acad_discount')
+engine = create_engine('mysql+pymysql://root:''@localhost:3306/familiar12')
 Session = sessionmaker(bind=engine)
 #conn=engine.connect()
 
@@ -294,7 +301,9 @@ try:
             instrument = random.choice(instruments)
             enrollment = Enrollment(
                 id_student=student.id_student,
-                id_instrument=instrument.id_instrument
+                id_instrument=instrument.id_instrument,
+                name_student=student.first_name,
+                lastname_student=student.last_name
             )
             sesion.add(enrollment)
 
@@ -342,30 +351,72 @@ print(tabulate([row.__dict__ for row in result], headers="keys"))  # Imprime una
 
 """
 
-
-def enroll_student(student_id, instrument_id):
-    student = sesion.query(Student).get(student_id)
+def enroll_student(instrument_id, name, lastname, fam, enroll_date=date.today()):
+    existing_student = sesion.query(Student).filter_by(first_name=name, last_name=lastname).first()
     new_instrument = sesion.query(Instrument).get(instrument_id)
     
-    # Verificar si el estudiante ya está inscrito en otro instrumento del mismo pack
+    if existing_student:
+        student_id = existing_student.id_student
+        
+    else:    
+        new_student = Student(first_name=name, last_name=lastname)  
+        sesion.add(new_student)
+        sesion.flush()  # Esto asigna un id al nuevo estudiante
+        student_id = new_student.id_student
+        
+        # Crear una nueva inscripción sin descuento para el nuevo estudiante
+        new_enrollment = Enrollment(
+            id_student=student_id, 
+            id_instrument=instrument_id,
+            name_student=name,
+            lastname_student=lastname,
+            enrollment_date=enroll_date,
+            discount=0.0,
+            family=fam
+        )
+        sesion.add(new_enrollment)
+        sesion.commit()
+        f"Nueva inscripción creada sin descuento"
+        return new_enrollment # "Nueva inscripción creada sin descuento"
+        
+        
+        
+    # Verificamos si el estudiante ya está inscrito en otros instrumentos del mismo pack
     existing_enrollments = sesion.query(Enrollment).filter_by(id_student=student_id).all()
-    for enrollment in existing_enrollments:
-        if enrollment.instrument.pack_id == new_instrument.pack_id:
-            # Aplicar descuento a ambas inscripciones
-            enrollment.discount = 0.5
-            new_enrollment = Enrollment(id_student=student_id, id_instrument=instrument_id, discount=0.5)
-            sesion.add(new_enrollment)
-            sesion.commit()
-            return "Descuento aplicado"
+    same_pack_enrollments = [
+        enrollment for enrollment in existing_enrollments 
+        if enrollment.instrument.pack_id == new_instrument.pack_id
+    ]
     
-    # Si no hay coincidencia, crear una nueva inscripción sin descuento
-    new_enrollment = Enrollment(id_student=student_id, id_instrument=instrument_id)
+    if len(same_pack_enrollments) >= 2:
+        # Si ya está inscrito en 2 o más instrumentos del mismo pack, aplicar 75% de descuento
+        discount = 0.75
+    elif len(same_pack_enrollments) == 1:
+        # Si está inscrito en 1 instrumento del mismo pack, aplicar 50% de descuento
+        discount = 0.5
+    else:
+        # Si no está inscrito en ningún instrumento del mismo pack, no hay descuento
+        discount = 0.0
+    
+    # Crear nueva inscripción con el descuento correspondiente y.....
+    new_enrollment = Enrollment(
+        id_student=student_id, 
+        id_instrument=instrument_id, 
+        discount=discount, 
+        enrollment_date=enroll_date,
+        name_student=name,
+        lastname_student=lastname,
+        family=fam
+    )
     sesion.add(new_enrollment)
+    
+    # Aplica el mismo descuento a las inscripciones ya existentes del mismo pack
+    for enrollment in same_pack_enrollments:
+        enrollment.discount = discount
+    
     sesion.commit()
-    return "Nueva inscripción creada"
-
-
-
+    f"Inscripción creada con {discount*100}% de descuento"
+    return new_enrollment #f"Inscripción creada con {discount*100}% de descuento"
 
 
 
@@ -374,17 +425,23 @@ def get_final_price(enrollment_id):
     enrollment = sesion.query(Enrollment).get(enrollment_id)
     pack_price = enrollment.instrument.pack.pack_price
     discount = enrollment.discount
-    return pack_price * (1 - discount)
-
+    
+    price_discount=pack_price*(1-discount)
+    if enrollment.family==True:
+        family_discount=0.10
+        price_discount=price_discount*(1-family_discount)
+        return price_discount
+    else:
+        return price_discount
 
 
 
 # Inscribimos a un estudiante en un instrumento
-result = enroll_student(student_id=1, instrument_id=1)
+result = enroll_student(instrument_id=1, name='John',lastname='Doe', fam=True, enroll_date=date.today())
 print(result)
-
+sesion.commit()
 # Obtener el precio final de una inscripción, cada una
-final_price = get_final_price(enrollment_id=1)
+final_price = get_final_price(enrollment_id=result.id_enrollment)
 print(f"Precio final: {final_price}")
 
 
@@ -409,3 +466,5 @@ result = sesion.query(Student).all()
 for row in result:
     pprint(row.__dict__)  # 
 """
+
+
