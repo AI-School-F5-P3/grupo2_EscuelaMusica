@@ -3,13 +3,16 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
+from .config import config_dict
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from urllib.parse import quote_plus
+import os
+from app.utils.app_logging import setup_logger
 import pymysql
 pymysql.install_as_MySQLdb()
-import os
+
 
 # Cargar variables de entorno
 load_dotenv()
@@ -19,28 +22,18 @@ ma = Marshmallow()
 jwt = JWTManager()
 migrate = Migrate()
 
-def create_app(config_name='default'):
+def create_app(config_name):
     app = Flask(__name__)
-    
-    if config_name == 'production':
-        app.config.from_object('app.config.ProductionConfig')
-    elif config_name == 'testing':
-        app.config.from_object('app.config.TestingConfig')
-    else:
-        app.config.from_object('app.config.DevelopmentConfig')
+    app.config.from_object(config_dict[config_name])
+    config[config_name].init_app(app)
 
     db.init_app(app)
     ma.init_app(app)
     jwt.init_app(app)
     migrate.init_app(app, db)
+    setup_logger(app)
 
-    # Registrar rutas
-    from app.routes.students import students_bp
-    from app.routes.teachers import teachers_bp
-    from app.routes.levels import levels_bp
-    from app.routes.instruments import instruments_bp
-    from app.routes.enrollments import enrollments_bp
-
+    from .routes import students_bp, teachers_bp, levels_bp, instruments_bp, enrollments_bp
     app.register_blueprint(students_bp)
     app.register_blueprint(teachers_bp)
     app.register_blueprint(levels_bp)
@@ -52,3 +45,4 @@ def create_app(config_name='default'):
 if __name__ == '__main__':
     app = create_app(os.getenv('FLASK_ENV', 'development'))
     app.run()
+
