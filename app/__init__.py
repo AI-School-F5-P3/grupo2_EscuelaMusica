@@ -13,6 +13,7 @@ import os
 import sys #puse esto
 from app.utils.app_logging import setup_logger #añadi esto alejandra
 
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))) #puse esto
 
 
@@ -57,6 +58,10 @@ def create_app(config_name='default'):
     app.register_blueprint(instruments_bp)
     app.register_blueprint(enrollments_bp)
     app.register_blueprint(auth_bp) #lo añadi alejandra claude
+
+    with app.app_context():
+        db.create_all()
+        
 
     return app
 

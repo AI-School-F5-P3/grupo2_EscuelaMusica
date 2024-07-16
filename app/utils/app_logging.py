@@ -2,7 +2,7 @@ import os
 import logging
 from logging.handlers import RotatingFileHandler
 from functools import wraps
-from flask import request, g, current_app
+from flask import request, g, current_app, make_response
 import time
 
 def setup_logger(app):
@@ -10,12 +10,11 @@ def setup_logger(app):
     if not app.debug or app.testing:
         log_dir = os.path.join(app.root_path, 'logs')
         if not os.path.exists(log_dir):
-            try:  #añadi alejandra
-                #os.mkdir(log_dir)
+            try:
                 os.makedirs(log_dir)
-                print(f"Carpeta 'logs' creada en: {log_dir}") #añadi alejandra
-            except Exception as e:  #añadi alejandra
-                print(f"No se pudo crear la carpeta 'logs': {e}")    #añadi alejandra
+                print(f"Carpeta 'logs' creada en: {log_dir}")
+            except Exception as e:
+                print(f"No se pudo crear la carpeta 'logs': {e}")
         log_file = os.path.join(log_dir, 'app.log')
         
         file_handler = RotatingFileHandler(log_file, maxBytes=10240, backupCount=10)
@@ -42,6 +41,9 @@ def log_request(f):
         current_app.logger.info(f"Datos: {request.get_data()}")
 
         response = f(*args, **kwargs)
+        
+        # Asegurarse de que `response` sea un objeto de respuesta de Flask
+        response = make_response(response)
 
         duration = time.time() - start_time
 
@@ -66,4 +68,3 @@ def log_warning(message):
 def log_debug(message):
     """Función para loguear mensajes de debug."""
     current_app.logger.debug(message)
-

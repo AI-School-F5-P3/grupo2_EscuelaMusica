@@ -7,12 +7,13 @@ from faker import Faker
 from sqlalchemy import Float, ForeignKey #se agrego neuvo sugerencia claude
 from flask_login import UserMixin #añadi yo alejandra claude . INstalé flask_login
 from werkzeug.security import generate_password_hash, check_password_hash #añadi yo alejandra claude, instale werkzeug
+from app import db
 
-db = SQLAlchemy()
+#db = SQLAlchemy()
 
 # Definición de modelos
 
-class User(db.Model, UserMixin): #yo alejandra añadi claude todo el codigo hasta donde dice aquí
+class User(db.Model): #yo alejandra añadi claude todo el codigo hasta donde dice aquí
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(255))

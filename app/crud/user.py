@@ -1,5 +1,5 @@
 from app.models import User
-from app import db
+from app.__init__ import db
 from app.utils.security import generate_password_hash
 
 def create_user(username, password):
@@ -27,3 +27,4 @@ def delete_user(username):
         db.session.commit()
         return True
     return False
+
