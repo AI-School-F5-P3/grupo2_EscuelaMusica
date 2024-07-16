@@ -73,7 +73,8 @@ class Enrollment(db.Model):
     id_enrollment = db.Column(db.Integer, primary_key=True, autoincrement=True)
     id_student = db.Column(db.Integer, ForeignKey('students.id_student'))
     id_instrument= db.Column(db.Integer, ForeignKey('instruments.id_instrument'))
-    discount = db.Column(db.Float, default=0.0)
+    discount_rate= db.Column(db.Float, default=0.0)
+    family_discount = db.Column(db.Boolean, default=False)
     student = db.relationship("Student", backref="enrollments")
     instrument = db.relationship("Instrument", backref="enroll")
 
@@ -257,7 +258,7 @@ def populate_database():
         for enrollment in existing_enrollments:
             if enrollment.instrument.pack_id == new_instrument.pack_id:
                 # Aplicar descuento a ambas inscripciones
-                enrollment.discount = 0.5
+                enrollment.discount_rate = 0.5
                 new_enrollment = Enrollment(id_student=student_id, id_instrument=instrument_id, discount=0.5)
                 db.session.add(new_enrollment)
                 db.session.commit()
@@ -272,8 +273,8 @@ def populate_database():
     def get_final_price(enrollment_id):
         enrollment = db.session.query(Enrollment).get(enrollment_id)
         pack_price = enrollment.instrument.pack.pack_price
-        discount = enrollment.discount
-        return pack_price * (1 - discount)
+        discount_rate = enrollment.discount_rate
+        return pack_price * (1 - discount_rate)
 
     # Inscribimos a un estudiante en un instrumento
     result = enroll_student(student_id=1, instrument_id=1)
