@@ -109,6 +109,9 @@ class Enrollment(db.Model):
 def populate_database():
     #reset_database() #si quito esto, me hace 'dos veces' el rellenado. Si lo dejo me salta error
     #db.create_all() #quité a la vez reset_database() y db.create_all() con el debug=True
+    db.drop_all()
+    db.create_all()
+    
 
     relations = {
         "Mar": ["Piano", "Guitarra", "Batería", "Flauta"],
