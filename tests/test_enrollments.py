@@ -1,113 +1,118 @@
 import pytest
+from flask import json
 from app import create_app, db
-from app.models import Enrollment, Student, Level, Instrument, Teacher
+from app.models import Student, Instrument, Enrollment
+from datetime import date
 
 @pytest.fixture(scope='module')
-def app():
+def test_client():
     app = create_app('testing')
-    return app
+    with app.test_client() as testing_client:
+        with app.app_context():
+            yield testing_client
 
 @pytest.fixture(scope='module')
-def test_client(app):
-    return app.test_client()
+def init_database(test_client):
+    db.create_all()
 
-@pytest.fixture(scope='module')
-def init_database(app):
-    with app.app_context():
-        db.create_all()
-        yield db
-        db.session.remove()
-        db.drop_all()
+    # Crear datos de prueba
+    student = Student(first_name="Test", last_name="Student", age=20, phone="123-456-7890", email="test@example.com")
+    instrument = Instrument(instrument="Piano")
+    db.session.add(student)
+    db.session.add(instrument)
+    db.session.commit()
 
-def test_create_enrollment(init_database):
-    with init_database.app.app_context():
-        # Crear un estudiante, nivel, instrumento y profesor
-        student = Student(first_name='John', last_name='Doe', age=25, phone='1234567890', email='john.doe@example.com')
-        level = Level(name_level='Iniciación')
-        instrument = Instrument(instrument='Piano')
-        teacher = Teacher(name_teacher='Maria Gomez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+    yield db
 
-        # Crear una nueva inscripción
-        enrollment = Enrollment(
-            id_student=student.id_student,
-            id_level=level.id_level,
-            id_instrument=instrument.id_instrument,
-            id_teacher=teacher.id_teacher,
-            base_price=35.0,
-            final_price=35.0,
-            family_discount=False
-        )
-        db.session.add(enrollment)
-        db.session.commit()
+    db.drop_all()
 
-        # Verificar que la inscripción se creó correctamente
-        assert enrollment.id_student == student.id_student
-        assert enrollment.id_level == level.id_level
-        assert enrollment.id_instrument == instrument.id_instrument
-        assert enrollment.id_teacher == teacher.id_teacher
-        assert enrollment.base_price == 35.0
-        assert enrollment.final_price == 35.0
-        assert not enrollment.family_discount
+def test_create_enrollment(test_client, init_database):
+    response = test_client.post('/enrollments', json={
+        "id_student": 1,
+        "id_instrument": 1,
+        "enrollment_date": str(date.today()),
+        "name_student": "Test",
+        "lastname_student": "Student",
+        "family": False
+    })
 
-def test_update_enrollment(init_database):
-    with init_database.app.app_context():
-        # Crear una nueva inscripción
-        student = Student(first_name='Jane', last_name='Smith', age=30, phone='9876543210', email='jane.smith@example.com')
-        level = Level(name_level='Avanzado')
-        instrument = Instrument(instrument='Guitarra')
-        teacher = Teacher(name_teacher='Carlos Rodriguez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+    assert response.status_code == 201
+    data = json.loads(response.data)
+    assert "id_enrollment" in data
+    assert data["name_student"] == "Test"
+    assert data["lastname_student"] == "Student"
 
-        enrollment = Enrollment(
-            id_student=student.id_student,
-            id_level=level.id_level,
-            id_instrument=instrument.id_instrument,
-            id_teacher=teacher.id_teacher,
-            base_price=40.0,
-            final_price=40.0,
-            family_discount=False
-        )
-        db.session.add(enrollment)
-        db.session.commit()
+def test_get_enrollment(test_client, init_database):
+    # Primero, creamos una inscripción
+    test_client.post('/enrollments', json={
+        "id_student": 1,
+        "id_instrument": 1,
+        "enrollment_date": str(date.today()),
+        "name_student": "Test",
+        "lastname_student": "Student",
+        "family": False
+    })
 
-        # Actualizar la inscripción
-        enrollment.final_price = 35.0
-        enrollment.family_discount = True
-        db.session.commit()
+    # Luego, intentamos obtenerla
+    response = test_client.get('/enrollments/1')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data["id_enrollment"] == 1
+    assert data["name_student"] == "Test"
+    assert data["lastname_student"] == "Student"
 
-        # Verificar que la inscripción se actualizó correctamente
-        updated_enrollment = Enrollment.query.get(enrollment.id_enrollment)
-        assert updated_enrollment.final_price == 35.0
-        assert updated_enrollment.family_discount
+def test_update_enrollment(test_client, init_database):
+    # Primero, creamos una inscripción
+    test_client.post('/enrollments', json={
+        "id_student": 1,
+        "id_instrument": 1,
+        "enrollment_date": str(date.today()),
+        "name_student": "Test",
+        "lastname_student": "Student",
+        "family": False
+    })
 
-def test_delete_enrollment(init_database):
-    with init_database.app.app_context():
-        # Crear una nueva inscripción
-        student = Student(first_name='Alice', last_name='Johnson', age=22, phone='5555555555', email='alice.johnson@example.com')
-        level = Level(name_level='Intermedio')
-        instrument = Instrument(instrument='Violín')
-        teacher = Teacher(name_teacher='Laura Martinez')
-        db.session.add_all([student, level, instrument, teacher])
-        db.session.commit()
+    # Luego, intentamos actualizarla
+    response = test_client.put('/enrollments/1', json={
+        "family": True
+    })
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert data["family"] == True
 
-        enrollment = Enrollment(
-            id_student=student.id_student,
-            id_level=level.id_level,
-            id_instrument=instrument.id_instrument,
-            id_teacher=teacher.id_teacher,
-            base_price=45.0,
-            final_price=45.0,
-            family_discount=False
-        )
-        db.session.add(enrollment)
-        db.session.commit()
+def test_delete_enrollment(test_client, init_database):
+    # Primero, creamos una inscripción
+    test_client.post('/enrollments', json={
+        "id_student": 1,
+        "id_instrument": 1,
+        "enrollment_date": str(date.today()),
+        "name_student": "Test",
+        "lastname_student": "Student",
+        "family": False
+    })
 
-        # Eliminar la inscripción
-        db.session.delete(enrollment)
-        db.session.commit()
+    # Luego, intentamos eliminarla
+    response = test_client.delete('/enrollments/1')
+    assert response.status_code == 200
 
-        # Verificar que la inscripción se eliminó correctamente
-        deleted_enrollment = Enrollment.query.get(enrollment.id_enrollment)
+    # Verificamos que ya no existe
+    response = test_client.get('/enrollments/1')
+    assert response.status_code == 404
+
+def test_get_final_price(test_client, init_database):
+    # Primero, creamos una inscripción
+    test_client.post('/enrollments', json={
+        "id_student": 1,
+        "id_instrument": 1,
+        "enrollment_date": str(date.today()),
+        "name_student": "Test",
+        "lastname_student": "Student",
+        "family": False
+    })
+
+    # Luego, obtenemos el precio final
+    response = test_client.get('/enrollments/1/final-price')
+    assert response.status_code == 200
+    data = json.loads(response.data)
+    assert "final_price" in data
+    assert isinstance(data["final_price"], float)
